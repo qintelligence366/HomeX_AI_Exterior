@@ -20,12 +20,15 @@
             display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
             justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
             align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-            gap: 10px; /* 按钮间距 / Button spacing */
+            gap: 15px; /* 增加按钮间距以避免误操作 / Increase button spacing to avoid misoperation */
+            width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
         }
         #confirmButton, #resetButton {
             padding: 8px 16px; /* 按钮内边距 / Button padding */
             margin: 5px 0; /* 按钮间距 / Button spacing */
             font-size: 14px; /* 字体大小 / Font size */
+            height: 40px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
+            line-height: 24px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
             cursor: pointer; /* 鼠标指针样式 / Cursor style */
         }
         #zoomInButton, #zoomOutButton {
@@ -54,13 +57,15 @@
                 bottom: 10px; /* 底部间距 / Bottom margin */
                 left: 50%; /* 居中 / Center */
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
-                width: 90%; /* 调整宽度以适配按钮 / Adjust width to fit buttons */
-                gap: 3px; /* 缩小间距以适应小屏幕 / Reduce gap for smaller screens */
+                width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
+                gap: 10px; /* 手机端增加间距以避免误操作 / Increase gap on mobile to avoid misoperation */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             }
             #confirmButton, #resetButton {
                 padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
                 font-size: 12px; /* 缩小字体大小 / Reduce font size */
+                height: 30px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
+                line-height: 18px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
                 width: auto; /* 自动宽度 / Auto width */
                 box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
@@ -252,7 +257,7 @@
             isDragging = true;
             const rect = canvas.getBoundingClientRect();
             startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - originX;
-            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - originY;
+            startY = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.top - originY;
         }
 
         function stopDragging() {
