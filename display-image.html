@@ -3,77 +3,42 @@
 <head>
     <style>
         #canvasContainer {
-            position: relative; /* For absolute positioning of buttons */
-            width: 600px; /* Fixed canvas width */
-            height: 450px; /* Fixed canvas height */
-            overflow: hidden; /* Hide overflow for dragging */
-            border: 1px solid black; /* Border to visualize area */
+            position: relative;
+            width: 600px;
+            height: 450px;
+            overflow: hidden;
+            border: 1px solid black;
         }
         #canvas {
-            position: absolute; /* Allow dragging */
+            position: absolute;
             top: 0;
             left: 0;
         }
-        #buttons {
-            margin-top: 10px; /* Margin between buttons and container */
-            text-align: center; /* Center align */
-            display: none; /* Default hidden */
-        }
         #zoomButtons {
-            position: absolute; /* Position buttons on top of canvas */
+            position: absolute;
             top: 10px;
             right: 10px;
             display: flex;
             flex-direction: column;
+            gap: 5px;
         }
-        #confirmButton, #resetButton {
-            padding: 8px 16px; /* Button padding */
-            margin: 5px 0; /* Button spacing */
-            font-size: 14px; /* Font size */
-            cursor: pointer; /* Cursor style */
+        .zoomButton {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid black;
+            background: white;
+            font-size: 20px;
+            line-height: 40px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        #zoomInButton, #zoomOutButton {
-            width: 40px; /* Circular button size */
-            height: 40px; /* Circular button size */
-            border-radius: 50%; /* Make circular */
-            border: 1px solid #000; /* Border for visibility */
-            background: #fff; /* White background */
-            margin: 5px 0; /* Button spacing */
-            font-size: 20px; /* Symbol size */
-            line-height: 40px; /* Center symbol vertically */
-            text-align: center; /* Center symbol horizontally */
-            cursor: pointer; /* Cursor style */
-        }
-        #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc; /* Gray background when disabled */
-            cursor: not-allowed; /* Disabled cursor */
-        }
-        @media (max-width: 768px) { /* Mobile style optimization */
-            #canvasContainer {
-                width: 90vw; /* 90% of viewport width */
-                height: 60vh; /* 60% of viewport height */
-            }
-            #buttons {
-                position: fixed; /* Fixed position */
-                bottom: 10px; /* Bottom margin */
-                left: 50%; /* Center */
-                transform: translateX(-50%); /* Horizontal center */
-                width: 80%; /* Width 80% of screen */
-            }
-            #confirmButton, #resetButton {
-                width: 45%; /* Each button takes 45% */
-                box-sizing: border-box; /* Include padding and border in width */
-            }
-            #zoomButtons {
-                top: 5px;
-                right: 5px;
-            }
-            #zoomInButton, #zoomOutButton {
-                width: 30px; /* Smaller size for mobile */
-                height: 30px;
-                font-size: 16px;
-                line-height: 30px;
-            }
+        .disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -81,260 +46,57 @@
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
         <div id="zoomButtons">
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
+            <button id="zoomInButton" class="zoomButton">+</button>
+            <button id="zoomOutButton" class="zoomButton">-</button>
         </div>
     </div>
-    <div id="buttons">
-        <button id="confirmButton">Confirm</button>
-        <button id="resetButton">Reset</button>
-    </div>
     <script>
-        const canvasContainer = document.getElementById("canvasContainer"); // Get canvas container
-        const canvas = document.getElementById("canvas"); // Get Canvas element
-        const ctx = canvas.getContext("2d"); // Get 2D drawing context
-        let image = new Image(); // Create image object
-        let points = []; // Array to store click point coordinates
-        let isClosed = false; // Flag to indicate if polygon is closed
-        let imageScale = 1; // Zoom scale for image only
-        let originX = 0; // Original x offset
-        let originY = 0; // Original y offset
-        let baseWidth, baseHeight; // Base dimensions
-        let regions = []; // Array to store multiple selected regions
-        let isDragging = false; // Flag for dragging
-        let startX = 0; // Start x position for dragging
-        let startY = 0; // Start y position for dragging
-        const confirmButton = document.getElementById("confirmButton"); // Confirm button
-        const resetButton = document.getElementById("resetButton"); // Reset button
-        const zoomInButton = document.getElementById("zoomInButton"); // Zoom in button
-        const zoomOutButton = document.getElementById("zoomOutButton"); // Zoom out button
-        const buttonsDiv = document.getElementById("buttons"); // Buttons container
-        const pixelRatio = window.devicePixelRatio || 1; // Get device pixel ratio
-
-        // Dynamically receive URL parameters
-        const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
-        if (imageUrl && !imageUrl.includes("via.placeholder")) {
-            if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20";
-            }
-        }
-        image.src = imageUrl;
-
-        image.onload = () => {
-            const maxWidth = 600; // Set base resolution to 600px
-            const maxHeight = 450; // Set base resolution to 450px
-            const imageRatio = image.width / image.height; // Calculate image aspect ratio
-            const canvasRatio = maxWidth / maxHeight; // Calculate canvas aspect ratio
-
-            // Adjust dimensions to maintain aspect ratio
-            if (imageRatio > canvasRatio) {
-                baseWidth = maxWidth;
-                baseHeight = maxWidth / imageRatio;
-            } else {
-                baseHeight = maxHeight;
-                baseWidth = maxHeight * imageRatio;
-            }
-
-            canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
-            canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
-            canvas.style.width = `${baseWidth}px`; // Set CSS width to logical pixels
-            canvas.style.height = `${baseHeight}px`; // Set CSS height to logical pixels
-            ctx.scale(pixelRatio, pixelRatio); // Scale context to match physical pixels
-            updateZoomButtons(); // Initial zoom button state
-            draw(); // Initial draw
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const zoomInButton = document.getElementById("zoomInButton");
+        const zoomOutButton = document.getElementById("zoomOutButton");
+        
+        let image = new Image();
+        let scale = 1;
+        let originX = 0, originY = 0;
+        
+        image.src = "image.png";  // 替换为你的图片路径
+        
+        image.onload = function () {
+            canvas.width = image.width;
+            canvas.height = image.height;
+            drawImage();
         };
-
-        image.onerror = () => {
-            console.error("Image failed to load:", imageUrl);
-            buttonsDiv.style.display = "block"; // Show buttons even if image fails to load
-            draw(); // Force draw
-        };
-
-        // Calculate distance between two points
-        function getDistance(p1, p2) {
-            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        
+        function drawImage() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(originX, originY);
+            ctx.scale(scale, scale);
+            ctx.drawImage(image, 0, 0);
+            ctx.restore();
         }
-
-        // Update zoom button states
+        
         function updateZoomButtons() {
-            if (imageScale >= 3) {
-                zoomInButton.classList.add("disabled");
-                zoomInButton.disabled = true;
-            } else {
-                zoomInButton.classList.remove("disabled");
-                zoomInButton.disabled = false;
-            }
-            if (imageScale <= 0.5) {
-                zoomOutButton.classList.add("disabled");
-                zoomOutButton.disabled = true;
-            } else {
-                zoomOutButton.classList.remove("disabled");
-                zoomOutButton.disabled = false;
-            }
+            zoomInButton.classList.toggle("disabled", scale >= 3);
+            zoomOutButton.classList.toggle("disabled", scale <= 0.5);
         }
-
-        // Draw image and polygon
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // Clear canvas using logical pixels
-            ctx.save(); // Save current state
-            ctx.scale(imageScale, imageScale); // Apply zoom to image only
-            ctx.translate(originX / pixelRatio, originY / pixelRatio); // Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // Draw image
-            ctx.restore(); // Restore state
-
-            // Draw red points with fixed size
-            const dotRadius = 3; // Fixed dot radius to 3 pixels, independent of zoom
-            points.forEach(point => {
-                ctx.beginPath();
-                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // Fixed red dot position and size
-                ctx.fillStyle = "red";
-                ctx.fill();
-            });
-
-            // Draw all confirmed regions
-            regions.forEach(region => {
-                ctx.beginPath();
-                ctx.moveTo(region[0].x - originX, region[0].y - originY);
-                for (let i = 1; i < region.length; i++) {
-                    ctx.lineTo(region[i].x - originX, region[i].y - originY);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = "lightblue";
-                ctx.stroke();
-            });
-
-            // Draw the current polygon being selected
-            if (points.length > 1) {
-                ctx.beginPath();
-                ctx.moveTo(points[0].x - originX, points[0].y - originY);
-                for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x - originX, points[i].y - originY);
-                }
-                if (isClosed) {
-                    ctx.closePath();
-                    ctx.strokeStyle = "lightblue";
-                    ctx.stroke();
-                } else if (points.length >= 4) {
-                    const firstPoint = points[0];
-                    const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 20;
-                    if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
-                        ctx.closePath();
-                        ctx.strokeStyle = "lightblue";
-                        ctx.stroke();
-                        isClosed = true;
-                        buttonsDiv.style.display = "block";
-                    }
-                }
-            }
-        }
-
-        // Handle click events (PC and mobile devices)
-        function handleInteraction(e) {
-            if (isClosed) return;
-
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
-
-            points.push({ x: x, y: y });
-            draw();
-            console.log("Clicked at:", x, y);
-        }
-
-        // Handle dragging for panning
-        function startDragging(e) {
-            if (isClosed) return;
-
-            isDragging = true;
-            const rect = canvas.getBoundingClientRect();
-            startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - originX;
-            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - originY;
-        }
-
-        function stopDragging() {
-            isDragging = false;
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
-            originX = x - startX;
-            originY = y - startY;
-
-            // Limit dragging to prevent image from moving completely out of view
-            const scaledWidth = baseWidth * imageScale;
-            const scaledHeight = baseHeight * imageScale;
-            const maxX = Math.max(0, scaledWidth - baseWidth);
-            const maxY = Math.max(0, scaledHeight - baseHeight);
-            originX = Math.min(0, Math.max(originX, -maxX));
-            originY = Math.min(0, Math.max(originY, -maxY));
-
-            draw();
-        }
-
-        // Mouse events for dragging
-        canvas.addEventListener("mousedown", startDragging);
-        canvas.addEventListener("mousemove", drag);
-        canvas.addEventListener("mouseup", stopDragging);
-        canvas.addEventListener("mouseleave", stopDragging);
-
-        // Touch events for dragging
-        canvas.addEventListener("touchstart", (e) => {
-            handleInteraction(e);
-            startDragging(e);
-        });
-        canvas.addEventListener("touchmove", drag);
-        canvas.addEventListener("touchend", stopDragging);
-
-        // Click event for selecting points
-        canvas.addEventListener("click", handleInteraction);
-
-        // Confirm button click event
-        confirmButton.addEventListener("click", () => {
-            if (isClosed) {
-                regions.push([...points]);
-                points = [];
-                isClosed = false;
-                buttonsDiv.style.display = "none";
-                draw();
-                console.log("Regions confirmed:", regions);
-            }
-        });
-
-        // Reset button click event
-        resetButton.addEventListener("click", () => {
-            points = [];
-            isClosed = false;
-            buttonsDiv.style.display = "none";
-            draw();
-        });
-
-        // Zoom in button click event
-        zoomInButton.addEventListener("click", () => {
-            if (imageScale < 3) {
-                imageScale *= 1.2; // Increase scale by 20%
+        
+        zoomInButton.addEventListener("click", function () {
+            if (scale < 3) {
+                scale *= 1.2;
+                drawImage();
                 updateZoomButtons();
-                draw();
             }
         });
-
-        // Zoom out button click event
-        zoomOutButton.addEventListener("click", () => {
-            if (imageScale > 0.5) {
-                imageScale /= 1.2; // Decrease scale by 20%
+        
+        zoomOutButton.addEventListener("click", function () {
+            if (scale > 0.5) {
+                scale /= 1.2;
+                drawImage();
                 updateZoomButtons();
-                draw();
             }
         });
-
-        console.log("Image URL:", imageUrl);
     </script>
 </body>
 </html>
