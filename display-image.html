@@ -8,11 +8,6 @@
         let image = new Image();
         let points = []; // 存储点击点坐标
 
-        // 确认 Canvas 是否存在
-        if (!canvas || !ctx) {
-            console.error("Canvas or context not found!");
-        }
-
         // 动态接收 URL 参数
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
@@ -24,8 +19,9 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = window.innerWidth * 0.8; // 动态设置宽度为屏幕的 80%
-            const scale = Math.min(maxWidth / image.width, 1);
+            const maxWidth = 345; // 设置宽度为 345px
+            const maxHeight = 250; // 设置高度为 250px
+            const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
             const newWidth = image.width * scale;
             const newHeight = image.height * scale;
 
@@ -33,7 +29,6 @@
             canvas.height = newHeight;
             ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
-            // 确认 Canvas 初始化
             console.log("Canvas initialized:", canvas.width, canvas.height);
         };
 
@@ -47,15 +42,32 @@
             // 存储点击点
             points.push({ x: x, y: y });
 
-            // 重新绘制图片和所有点
+            // 重新绘制图片、红点和多边形
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            // 绘制红点
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI); // 半径为 5 的红点
+                ctx.arc(point.x, point.y, 5, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
+
+            // 连接点形成多边形
+            if (points.length > 1) {
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                // 如果点数大于等于 3，闭合多边形
+                if (points.length >= 3) {
+                    ctx.closePath();
+                    ctx.strokeStyle = "lightblue"; // 框选线颜色
+                    ctx.stroke();
+                }
+            }
 
             // 调试：打印点击位置到控制台
             console.log("Clicked at:", x, y);
