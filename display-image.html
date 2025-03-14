@@ -24,7 +24,7 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 345; // 设置为 345，与 Adalo 图片组件一致
+            const maxWidth = window.innerWidth * 0.8; // 动态设置宽度为屏幕的 80%
             const scale = Math.min(maxWidth / image.width, 1);
             const newWidth = image.width * scale;
             const newHeight = image.height * scale;
