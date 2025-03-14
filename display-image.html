@@ -1,118 +1,125 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script> <!-- 引入 Hammer.js 库 / Include Hammer.js library -->
+    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script> <!-- Include Hammer.js library -->
     <style>
         #buttons {
-            margin-top: 10px; /* 按钮与 Canvas 的间距 / Margin between buttons and Canvas */
-            text-align: center; /* 居中对齐 / Center align */
-            display: none; /* 默认隐藏 / Default hidden */
+            margin-top: 10px; /* Margin between buttons and Canvas */
+            text-align: center; /* Center align */
+            display: none; /* Default hidden */
         }
         #confirmButton, #resetButton {
-            padding: 10px 20px; /* 按钮内边距 / Button padding */
-            margin: 0 5px; /* 按钮间距 / Button spacing */
-            font-size: 16px; /* 字体大小 / Font size */
-            cursor: pointer; /* 鼠标指针样式 / Cursor style */
+            padding: 10px 20px; /* Button padding */
+            margin: 0 5px; /* Button spacing */
+            font-size: 16px; /* Font size */
+            cursor: pointer; /* Cursor style */
         }
-        @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
+        @media (max-width: 768px) { /* Mobile style optimization */
             #buttons {
-                position: fixed; /* 固定位置 / Fixed position */
-                bottom: 10px; /* 底部间距 / Bottom margin */
-                left: 50%; /* 居中 / Center */
-                transform: translateX(-50%); /* 水平居中 / Horizontal center */
-                width: 80%; /* 宽度占屏幕 80% / Width 80% of screen */
+                position: fixed; /* Fixed position */
+                bottom: 10px; /* Bottom margin */
+                left: 50%; /* Center */
+                transform: translateX(-50%); /* Horizontal center */
+                width: 80%; /* Width 80% of screen */
             }
             #confirmButton, #resetButton {
-                width: 45%; /* 每个按钮占 45% / Each button takes 45% */
-                box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
+                width: 45%; /* Each button takes 45% */
+                box-sizing: border-box; /* Include padding and border in width */
             }
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- 设置边框以可视化 Canvas 区域 / Set border to visualize Canvas area -->
+    <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- Set border to visualize Canvas area -->
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
     </div>
     <script>
-        const canvas = document.getElementById("canvas"); // 获取 Canvas 元素 / Get Canvas element
-        const ctx = canvas.getContext("2d"); // 获取 2D 绘图上下文 / Get 2D drawing context
-        let image = new Image(); // 创建图片对象 / Create image object
-        let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
-        let isClosed = false; // 标记多边形是否闭合 / Flag to indicate if polygon is closed
-        let scale = 1; // 缩放比例，仅用于图片 / Zoom scale for image only
-        let originX = 0; // 原始 x 偏移 / Original x offset
-        let originY = 0; // 原始 y 偏移 / Original y offset
-        let baseWidth, baseHeight; // 基础尺寸 / Base dimensions
-        let regions = []; // 存储多个框选区域 / Array to store multiple selected regions
-        const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
-        const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
-        const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
-        const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
+        const canvas = document.getElementById("canvas"); // Get Canvas element
+        const ctx = canvas.getContext("2d"); // Get 2D drawing context
+        let image = new Image(); // Create image object
+        let points = []; // Array to store click point coordinates
+        let isClosed = false; // Flag to indicate if polygon is closed
+        let scale = 1; // Zoom scale for image only
+        let originX = 0; // Original x offset
+        let originY = 0; // Original y offset
+        let baseWidth, baseHeight; // Base dimensions
+        let regions = []; // Array to store multiple selected regions
+        const confirmButton = document.getElementById("confirmButton"); // Confirm button
+        const resetButton = document.getElementById("resetButton"); // Reset button
+        const buttonsDiv = document.getElementById("buttons"); // Buttons container
+        const pixelRatio = window.devicePixelRatio || 1; // Get device pixel ratio
 
-        // 确保 DOM 加载完成后再绑定按钮 / Ensure DOM is loaded before binding buttons
+        // Ensure DOM is loaded before binding buttons
         document.addEventListener("DOMContentLoaded", () => {
             if (!confirmButton || !resetButton) {
-                console.error("Buttons not found!"); // 调试：检查按钮是否存在 / Debug: Check if buttons exist
+                console.error("Buttons not found!");
             }
         });
 
-        // 动态接收 URL 参数 / Dynamically receive URL parameters
+        // Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
+        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20"; // 如果缺少参数，添加 imgix 优化参数 / Add imgix optimization parameters if missing
+                imageUrl += "?auto=format&q=20";
             }
         }
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 345 * pixelRatio; // 考虑像素比，增加分辨率 / Adjust for pixel ratio to increase resolution
-            const maxHeight = 250 * pixelRatio; // 考虑像素比，增加分辨率 / Adjust for pixel ratio to increase resolution
-            const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // 计算缩放比例以保持纵横比 / Calculate scale to maintain aspect ratio
-            baseWidth = image.width * scaleRatio; // 计算基础宽度 / Calculate base width
-            baseHeight = image.height * scaleRatio; // 计算基础高度 / Calculate base height
+            const maxWidth = 600 * pixelRatio; // Increase base resolution to 600px
+            const maxHeight = 450 * pixelRatio; // Increase base resolution to 450px
+            const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // Calculate scale to maintain aspect ratio
+            baseWidth = image.width * scaleRatio; // Calculate base width
+            baseHeight = image.height * scaleRatio; // Calculate base height
 
-            canvas.width = baseWidth * pixelRatio; // 增加 Canvas 宽度以支持高 DPI / Increase Canvas width for high DPI
-            canvas.height = baseHeight * pixelRatio; // 增加 Canvas 高度以支持高 DPI / Increase Canvas height for high DPI
-            ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
-            draw(); // 初始化绘制 / Initial draw
+            // Dynamically adjust initial scale to fit large images
+            scale = Math.min(canvas.clientWidth / baseWidth, canvas.clientHeight / baseHeight);
+            if (scale < 1) {
+                baseWidth *= scale;
+                baseHeight *= scale;
+            }
 
-            console.log("Canvas initialized:", canvas.width, canvas.height); // 调试：打印 Canvas 初始化信息 / Debug: Log Canvas initialization info
+            canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
+            canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
+            ctx.scale(pixelRatio, pixelRatio); // Scale context to match physical pixels
+            draw(); // Initial draw
+
+            console.log("Image loaded successfully:", imageUrl);
         };
 
         image.onerror = () => {
-            console.error("Image failed to load:", imageUrl); // 调试：记录图片加载失败 / Debug: Log image load failure
-            buttonsDiv.style.display = "block"; // 即使图片加载失败，也显示按钮 / Show buttons even if image fails to load
-            draw(); // 强制绘制 / Force draw
+            console.error("Image failed to load:", imageUrl);
+            buttonsDiv.style.display = "block"; // Show buttons even if image fails to load
+            draw(); // Force draw
         };
 
-        // 计算两点之间的距离 / Calculate distance between two points
+        // Calculate distance between two points
         function getDistance(p1, p2) {
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        // 绘制图片和多边形 / Draw image and polygon
+        // Draw image and polygon
         function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 清除画布，使用逻辑像素 / Clear canvas using logical pixels
-            ctx.save(); // 保存当前状态 / Save current state
-            ctx.scale(scale, scale); // 仅缩放图片 / Scale image only
-            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth / scale, baseHeight / scale); // 绘制图片 / Draw image
-            ctx.restore(); // 恢复状态 / Restore state
+            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // Clear canvas using logical pixels
+            ctx.save(); // Save current state
+            ctx.scale(scale, scale); // Apply zoom to image only
+            ctx.translate(originX / pixelRatio, originY / pixelRatio); // Apply offset
+            ctx.drawImage(image, 0, 0, baseWidth / scale, baseHeight / scale); // Draw image
+            ctx.restore(); // Restore state
 
-            // 绘制红点 / Draw red points
-            const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
+            // Draw red points with fixed size
+            const dotRadius = 3; // Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // 固定红点位置和大小 / Fixed red dot position and size
+                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // Fixed red dot position and size
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
 
-            // 绘制所有已确认的框选区域 / Draw all confirmed regions
+            // Draw all confirmed regions
             regions.forEach(region => {
                 ctx.beginPath();
                 ctx.moveTo(region[0].x - originX, region[0].y - originY);
@@ -120,18 +127,17 @@
                     ctx.lineTo(region[i].x - originX, region[i].y - originY);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                ctx.strokeStyle = "lightblue";
                 ctx.stroke();
             });
 
-            // 绘制当前正在框选的多边形 / Draw the current polygon being selected
+            // Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(points[0].x - originX, points[0].y - originY); // 从第一个点开始 / Start from the first point
+                ctx.moveTo(points[0].x - originX, points[0].y - originY);
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x - originX, points[i].y - originY); // 连接到下一个点 / Connect to the next point
+                    ctx.lineTo(points[i].x - originX, points[i].y - originY);
                 }
-                // 如果多边形已闭合，保持闭合状态 / If polygon is closed, maintain closed state
                 if (isClosed) {
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
@@ -139,80 +145,73 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 20; // 距离阈值，单位像素，可调整 / Distance threshold in pixels, adjustable
+                    const distanceThreshold = 20;
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
-                        isClosed = true; // 标记多边形已闭合 / Mark polygon as closed
-                        buttonsDiv.style.display = "block"; // 显示按钮 / Show buttons
+                        isClosed = true;
+                        buttonsDiv.style.display = "block";
                     }
                 }
             }
         }
 
-        // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
+        // Handle click events (PC and mobile devices)
         function handleInteraction(e) {
-            if (isClosed) return; // 如果已闭合，停止添加新点 / If closed, stop adding new points
+            if (isClosed) return;
 
-            e.preventDefault(); // 防止默认触摸行为 / Prevent default touch behavior
-            const rect = canvas.getBoundingClientRect(); // 获取 Canvas 的边界矩形 / Get Canvas bounding rectangle
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left; // 计算 x 坐标 / Calculate x coordinate
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top; // 计算 y 坐标 / Calculate y coordinate
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
 
-            // 存储点击点 / Store click point
             points.push({ x: x, y: y });
-
-            // 重新绘制 / Redraw
             draw();
-
-            // 调试：打印点击位置到控制台 / Debug: Log click position to console
             console.log("Clicked at:", x, y);
         }
 
-        // 支持点击和触摸事件 / Support click and touch events
         canvas.addEventListener("click", handleInteraction);
         canvas.addEventListener("touchstart", handleInteraction);
 
-        // 确定按钮点击事件 / Confirm button click event
+        // Confirm button click event
         confirmButton.addEventListener("click", () => {
             if (isClosed) {
-                regions.push([...points]); // 保存当前框选区域 / Save current region
-                points = []; // 清空当前点，准备下一次框选 / Clear current points for next selection
-                isClosed = false; // 重置闭合状态 / Reset closed state
-                buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
-                draw(); // 重新绘制 / Redraw
-                console.log("Regions confirmed:", regions); // 调试：打印所有框选区域 / Debug: Log all regions
+                regions.push([...points]);
+                points = [];
+                isClosed = false;
+                buttonsDiv.style.display = "none";
+                draw();
+                console.log("Regions confirmed:", regions);
             }
         });
 
-        // 重选按钮点击事件 / Reset button click event
+        // Reset button click event
         resetButton.addEventListener("click", () => {
-            points = []; // 清空当前点 / Clear current points
-            isClosed = false; // 重置闭合状态 / Reset closed state
-            buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
-            draw(); // 重新绘制 / Redraw
+            points = [];
+            isClosed = false;
+            buttonsDiv.style.display = "none";
+            draw();
         });
 
-        // 初始化 Hammer.js 实现缩放 / Initialize Hammer.js for pinch-to-zoom
+        // Initialize Hammer.js for pinch-to-zoom
         const hammer = new Hammer(canvas);
         if (!hammer) {
-            console.error("Hammer.js failed to load!"); // 调试：检查 Hammer.js 是否加载 / Debug: Check if Hammer.js is loaded
+            console.error("Hammer.js failed to load!");
         } else {
-            hammer.get('pinch').set({ enable: true }); // 启用双指缩放 / Enable pinch-to-zoom
-            let lastScale = 1; // 上次缩放比例 / Last scale value
+            hammer.get('pinch').set({ enable: true });
+            let lastScale = 1;
             hammer.on("pinch", (e) => {
-                console.log("Pinch detected:", e.scale); // 调试：检查缩放事件 / Debug: Log pinch event
-                scale = lastScale * e.scale; // 计算当前缩放比例 / Calculate current scale
-                scale = Math.min(Math.max(0.5, scale), 3); // 扩展缩放范围 0.5x 到 3x / Extend zoom range from 0.5x to 3x
-                draw(); // 重新绘制 / Redraw
+                console.log("Pinch detected:", e.scale);
+                scale = lastScale * e.scale;
+                scale = Math.min(Math.max(0.5, scale), 3);
+                draw();
             });
             hammer.on("pinchend", (e) => {
-                lastScale = scale; // 更新最后缩放比例 / Update last scale value
+                lastScale = scale;
             });
         }
 
-        // 调试：打印 URL 到控制台 / Debug: Log URL to console
         console.log("Image URL:", imageUrl);
     </script>
 </body>
