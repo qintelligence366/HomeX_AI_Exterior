@@ -41,7 +41,7 @@
         let image = new Image(); // Create image object
         let points = []; // Array to store click point coordinates
         let isClosed = false; // Flag to indicate if polygon is closed
-        let scale = 1; // Zoom scale for image only
+        let imageScale = 1; // Zoom scale for image only
         let originX = 0; // Original x offset
         let originY = 0; // Original y offset
         let baseWidth, baseHeight; // Base dimensions
@@ -69,25 +69,25 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600 * pixelRatio; // Increase base resolution to 600px
-            const maxHeight = 450 * pixelRatio; // Increase base resolution to 450px
+            const maxWidth = 600; // Increase base resolution to 600px
+            const maxHeight = 450; // Increase base resolution to 450px
             const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // Calculate scale to maintain aspect ratio
             baseWidth = image.width * scaleRatio; // Calculate base width
             baseHeight = image.height * scaleRatio; // Calculate base height
 
             // Dynamically adjust initial scale to fit large images
-            scale = Math.min(canvas.clientWidth / baseWidth, canvas.clientHeight / baseHeight);
-            if (scale < 1) {
-                baseWidth *= scale;
-                baseHeight *= scale;
+            imageScale = Math.min(canvas.clientWidth / baseWidth, canvas.clientHeight / baseHeight);
+            if (imageScale < 1) {
+                baseWidth *= imageScale;
+                baseHeight *= imageScale;
             }
 
             canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
+            canvas.style.width = `${baseWidth}px`; // Set CSS width to logical pixels
+            canvas.style.height = `${baseHeight}px`; // Set CSS height to logical pixels
             ctx.scale(pixelRatio, pixelRatio); // Scale context to match physical pixels
             draw(); // Initial draw
-
-            console.log("Image loaded successfully:", imageUrl);
         };
 
         image.onerror = () => {
@@ -105,9 +105,9 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // Clear canvas using logical pixels
             ctx.save(); // Save current state
-            ctx.scale(scale, scale); // Apply zoom to image only
+            ctx.scale(imageScale, imageScale); // Apply zoom to image only
             ctx.translate(originX / pixelRatio, originY / pixelRatio); // Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth / scale, baseHeight / scale); // Draw image
+            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // Draw image
             ctx.restore(); // Restore state
 
             // Draw red points with fixed size
@@ -202,13 +202,12 @@
             hammer.get('pinch').set({ enable: true });
             let lastScale = 1;
             hammer.on("pinch", (e) => {
-                console.log("Pinch detected:", e.scale);
-                scale = lastScale * e.scale;
-                scale = Math.min(Math.max(0.5, scale), 3);
+                imageScale = lastScale * e.scale;
+                imageScale = Math.min(Math.max(0.5, imageScale), 3);
                 draw();
             });
             hammer.on("pinchend", (e) => {
-                lastScale = scale;
+                lastScale = imageScale;
             });
         }
 
