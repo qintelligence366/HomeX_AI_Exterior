@@ -15,7 +15,7 @@
 
         // 动态接收 URL 参数
         const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/345";
+        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
                 imageUrl += "?auto=format&q=20";
@@ -24,7 +24,7 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 345; // 调整为 WebView 宽度
+            const maxWidth = 345; // 设置为 345，与 Adalo 图片组件一致
             const scale = Math.min(maxWidth / image.width, 1);
             const newWidth = image.width * scale;
             const newHeight = image.height * scale;
