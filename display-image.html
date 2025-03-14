@@ -2,12 +2,24 @@
 <html>
 <head>
     <script src="https://hammerjs.github.io/dist/hammer.min.js"></script> <!-- 引入 Hammer.js 库 / Include Hammer.js library -->
+    <style>
+        #buttons {
+            margin-top: 10px; /* 按钮与 Canvas 的间距 / Margin between buttons and Canvas */
+            text-align: center; /* 居中对齐 / Center align */
+        }
+        #confirmButton, #resetButton {
+            padding: 10px 20px; /* 按钮内边距 / Button padding */
+            margin: 0 5px; /* 按钮间距 / Button spacing */
+            font-size: 16px; /* 字体大小 / Font size */
+            cursor: pointer; /* 鼠标指针样式 / Cursor style */
+        }
+    </style>
 </head>
 <body>
     <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- 设置边框以可视化 Canvas 区域 / Set border to visualize Canvas area -->
     <div id="buttons" style="display: none;">
-        <button id="confirmButton">确定 / Confirm</button>
-        <button id="resetButton">重选 / Reset</button>
+        <button id="confirmButton">Confirm</button>
+        <button id="resetButton">Reset</button>
     </div>
     <script>
         const canvas = document.getElementById("canvas"); // 获取 Canvas 元素 / Get Canvas element
@@ -103,72 +115,4 @@
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
-                        isClosed = true; // 标记多边形已闭合 / Mark polygon as closed
-                        buttonsDiv.style.display = "block"; // 显示按钮 / Show buttons
-                    }
-                }
-            }
-            ctx.restore(); // 恢复状态 / Restore state
-        }
-
-        // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
-        function handleInteraction(e) {
-            if (isClosed) return; // 如果已闭合，停止添加新点 / If closed, stop adding new points
-
-            e.preventDefault(); // 防止默认触摸行为 / Prevent default touch behavior
-            const rect = canvas.getBoundingClientRect(); // 获取 Canvas 的边界矩形 / Get Canvas bounding rectangle
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left; // 计算 x 坐标 / Calculate x coordinate
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top; // 计算 y 坐标 / Calculate y coordinate
-
-            // 存储点击点 / Store click point
-            points.push({ x: x, y: y });
-
-            // 重新绘制 / Redraw
-            draw();
-
-            // 调试：打印点击位置到控制台 / Debug: Log click position to console
-            console.log("Clicked at:", x, y);
-        }
-
-        // 支持点击和触摸事件 / Support click and touch events
-        canvas.addEventListener("click", handleInteraction);
-        canvas.addEventListener("touchstart", handleInteraction);
-
-        // 确定按钮点击事件 / Confirm button click event
-        confirmButton.addEventListener("click", () => {
-            if (isClosed) {
-                regions.push([...points]); // 保存当前框选区域 / Save current region
-                points = []; // 清空当前点，准备下一次框选 / Clear current points for next selection
-                isClosed = false; // 重置闭合状态 / Reset closed state
-                buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
-                draw(); // 重新绘制 / Redraw
-                console.log("Regions confirmed:", regions); // 调试：打印所有框选区域 / Debug: Log all regions
-            }
-        });
-
-        // 重选按钮点击事件 / Reset button click event
-        resetButton.addEventListener("click", () => {
-            points = []; // 清空当前点 / Clear current points
-            isClosed = false; // 重置闭合状态 / Reset closed state
-            buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
-            draw(); // 重新绘制 / Redraw
-        });
-
-        // 初始化 Hammer.js 实现缩放 / Initialize Hammer.js for pinch-to-zoom
-        const hammer = new Hammer(canvas);
-        hammer.get('pinch').set({ enable: true }); // 启用双指缩放 / Enable pinch-to-zoom
-        let lastScale = 1; // 上次缩放比例 / Last scale value
-        hammer.on("pinch", (e) => {
-            scale = lastScale * e.scale; // 计算当前缩放比例 / Calculate current scale
-            scale = Math.min(Math.max(1, scale), 3); // 限制缩放范围 1x 到 3x / Limit zoom range from 1x to 3x
-            draw(); // 重新绘制 / Redraw
-        });
-        hammer.on("pinchend", (e) => {
-            lastScale = scale; // 更新最后缩放比例 / Update last scale value
-        });
-
-        // 调试：打印 URL 到控制台 / Debug: Log URL to console
-        console.log("Image URL:", imageUrl);
-    </script>
-</body>
-</html>
+                        isClosed = true; // 标记多边形
