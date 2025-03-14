@@ -15,7 +15,7 @@
 
         // 动态接收 URL 参数
         const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
+        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/345";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
                 imageUrl += "?auto=format&q=20";
