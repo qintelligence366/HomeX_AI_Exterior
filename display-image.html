@@ -3,14 +3,14 @@
 <head>
     <style>
         #canvasContainer {
-            position: relative; /* For absolute positioning of buttons and sliders */
+            position: relative; /* For absolute positioning of buttons */
             width: 600px; /* Fixed canvas width */
             height: 450px; /* Fixed canvas height */
-            overflow: hidden; /* Hide overflow for scrolling */
+            overflow: hidden; /* Hide overflow for dragging */
             border: 1px solid black; /* Border to visualize area */
         }
         #canvas {
-            position: absolute; /* Allow positioning with sliders */
+            position: absolute; /* Allow dragging */
             top: 0;
             left: 0;
         }
@@ -26,28 +26,27 @@
             display: flex;
             flex-direction: column;
         }
-        #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
+        #confirmButton, #resetButton {
             padding: 8px 16px; /* Button padding */
             margin: 5px 0; /* Button spacing */
             font-size: 14px; /* Font size */
             cursor: pointer; /* Cursor style */
         }
-        #horizontalSlider, #verticalSlider {
-            position: absolute;
-            background: #ccc; /* Slider background */
-            opacity: 0.7; /* Slightly transparent */
+        #zoomInButton, #zoomOutButton {
+            width: 40px; /* Circular button size */
+            height: 40px; /* Circular button size */
+            border-radius: 50%; /* Make circular */
+            border: 1px solid #000; /* Border for visibility */
+            background: #fff; /* White background */
+            margin: 5px 0; /* Button spacing */
+            font-size: 20px; /* Symbol size */
+            line-height: 40px; /* Center symbol vertically */
+            text-align: center; /* Center symbol horizontally */
+            cursor: pointer; /* Cursor style */
         }
-        #horizontalSlider {
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 10px;
-        }
-        #verticalSlider {
-            top: 0;
-            right: 0;
-            width: 10px;
-            height: 100%;
+        #zoomInButton.disabled, #zoomOutButton.disabled {
+            background: #ccc; /* Gray background when disabled */
+            cursor: not-allowed; /* Disabled cursor */
         }
         @media (max-width: 768px) { /* Mobile style optimization */
             #canvasContainer {
@@ -70,8 +69,10 @@
                 right: 5px;
             }
             #zoomInButton, #zoomOutButton {
-                padding: 5px 10px; /* Smaller padding for mobile */
-                font-size: 12px; /* Smaller font for mobile */
+                width: 30px; /* Smaller size for mobile */
+                height: 30px;
+                font-size: 16px;
+                line-height: 30px;
             }
         }
     </style>
@@ -80,11 +81,9 @@
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
         <div id="zoomButtons">
-            <button id="zoomInButton">Zoom In</button>
-            <button id="zoomOutButton">Zoom Out</button>
+            <button id="zoomInButton">+</button>
+            <button id="zoomOutButton">-</button>
         </div>
-        <input type="range" id="horizontalSlider" min="0" max="100" value="0" style="display: none;">
-        <input type="range" id="verticalSlider" min="0" max="100" value="0" orient="vertical" style="display: none;">
     </div>
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
@@ -102,12 +101,13 @@
         let originY = 0; // Original y offset
         let baseWidth, baseHeight; // Base dimensions
         let regions = []; // Array to store multiple selected regions
+        let isDragging = false; // Flag for dragging
+        let startX = 0; // Start x position for dragging
+        let startY = 0; // Start y position for dragging
         const confirmButton = document.getElementById("confirmButton"); // Confirm button
         const resetButton = document.getElementById("resetButton"); // Reset button
         const zoomInButton = document.getElementById("zoomInButton"); // Zoom in button
         const zoomOutButton = document.getElementById("zoomOutButton"); // Zoom out button
-        const horizontalSlider = document.getElementById("horizontalSlider"); // Horizontal slider
-        const verticalSlider = document.getElementById("verticalSlider"); // Vertical slider
         const buttonsDiv = document.getElementById("buttons"); // Buttons container
         const pixelRatio = window.devicePixelRatio || 1; // Get device pixel ratio
 
@@ -124,23 +124,24 @@
         image.onload = () => {
             const maxWidth = 600; // Set base resolution to 600px
             const maxHeight = 450; // Set base resolution to 450px
-            const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // Calculate scale to maintain aspect ratio
-            baseWidth = image.width * scaleRatio; // Calculate base width
-            baseHeight = image.height * scaleRatio; // Calculate base height
+            const imageRatio = image.width / image.height; // Calculate image aspect ratio
+            const canvasRatio = maxWidth / maxHeight; // Calculate canvas aspect ratio
 
-            // Fit image to canvas while maintaining aspect ratio
-            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // Use 90% of screen width or maxWidth
-            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of screen height or maxHeight
-            const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
-            baseWidth = canvasWidth;
-            baseHeight = canvasHeight;
-            imageScale = fitScale;
+            // Adjust dimensions to maintain aspect ratio
+            if (imageRatio > canvasRatio) {
+                baseWidth = maxWidth;
+                baseHeight = maxWidth / imageRatio;
+            } else {
+                baseHeight = maxHeight;
+                baseWidth = maxHeight * imageRatio;
+            }
 
             canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
             canvas.style.width = `${baseWidth}px`; // Set CSS width to logical pixels
             canvas.style.height = `${baseHeight}px`; // Set CSS height to logical pixels
             ctx.scale(pixelRatio, pixelRatio); // Scale context to match physical pixels
+            updateZoomButtons(); // Initial zoom button state
             draw(); // Initial draw
         };
 
@@ -155,34 +156,22 @@
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        // Update slider visibility and values based on zoom
-        function updateSliders() {
-            const scaledWidth = baseWidth * imageScale;
-            const scaledHeight = baseHeight * imageScale;
-
-            // Horizontal slider
-            if (scaledWidth > baseWidth) {
-                horizontalSlider.style.display = "block";
-                const maxOffsetX = scaledWidth - baseWidth;
-                horizontalSlider.max = maxOffsetX;
-                originX = -horizontalSlider.value;
+        // Update zoom button states
+        function updateZoomButtons() {
+            if (imageScale >= 3) {
+                zoomInButton.classList.add("disabled");
+                zoomInButton.disabled = true;
             } else {
-                horizontalSlider.style.display = "none";
-                originX = 0;
+                zoomInButton.classList.remove("disabled");
+                zoomInButton.disabled = false;
             }
-
-            // Vertical slider
-            if (scaledHeight > baseHeight) {
-                verticalSlider.style.display = "block";
-                const maxOffsetY = scaledHeight - baseHeight;
-                verticalSlider.max = maxOffsetY;
-                originY = -verticalSlider.value;
+            if (imageScale <= 0.5) {
+                zoomOutButton.classList.add("disabled");
+                zoomOutButton.disabled = true;
             } else {
-                verticalSlider.style.display = "none";
-                originY = 0;
+                zoomOutButton.classList.remove("disabled");
+                zoomOutButton.disabled = false;
             }
-
-            draw(); // Redraw with updated offsets
         }
 
         // Draw image and polygon
@@ -255,8 +244,57 @@
             console.log("Clicked at:", x, y);
         }
 
+        // Handle dragging for panning
+        function startDragging(e) {
+            if (isClosed) return;
+
+            isDragging = true;
+            const rect = canvas.getBoundingClientRect();
+            startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - originX;
+            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - originY;
+        }
+
+        function stopDragging() {
+            isDragging = false;
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
+            originX = x - startX;
+            originY = y - startY;
+
+            // Limit dragging to prevent image from moving completely out of view
+            const scaledWidth = baseWidth * imageScale;
+            const scaledHeight = baseHeight * imageScale;
+            const maxX = Math.max(0, scaledWidth - baseWidth);
+            const maxY = Math.max(0, scaledHeight - baseHeight);
+            originX = Math.min(0, Math.max(originX, -maxX));
+            originY = Math.min(0, Math.max(originY, -maxY));
+
+            draw();
+        }
+
+        // Mouse events for dragging
+        canvas.addEventListener("mousedown", startDragging);
+        canvas.addEventListener("mousemove", drag);
+        canvas.addEventListener("mouseup", stopDragging);
+        canvas.addEventListener("mouseleave", stopDragging);
+
+        // Touch events for dragging
+        canvas.addEventListener("touchstart", (e) => {
+            handleInteraction(e);
+            startDragging(e);
+        });
+        canvas.addEventListener("touchmove", drag);
+        canvas.addEventListener("touchend", stopDragging);
+
+        // Click event for selecting points
         canvas.addEventListener("click", handleInteraction);
-        canvas.addEventListener("touchstart", handleInteraction);
 
         // Confirm button click event
         confirmButton.addEventListener("click", () => {
@@ -282,19 +320,17 @@
         zoomInButton.addEventListener("click", () => {
             imageScale *= 1.2; // Increase scale by 20%
             imageScale = Math.min(imageScale, 3); // Limit max zoom to 3x
-            updateSliders();
+            updateZoomButtons();
+            draw();
         });
 
         // Zoom out button click event
         zoomOutButton.addEventListener("click", () => {
             imageScale /= 1.2; // Decrease scale by 20%
             imageScale = Math.max(imageScale, 0.5); // Limit min zoom to 0.5x
-            updateSliders();
+            updateZoomButtons();
+            draw();
         });
-
-        // Handle slider input for scrolling
-        horizontalSlider.addEventListener("input", updateSliders);
-        verticalSlider.addEventListener("input", updateSliders);
 
         console.log("Image URL:", imageUrl);
     </script>
