@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <canvas id="canvas"></canvas>
+    <script>
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let image = new Image();
+
+        // 从 URL 参数中获取图片地址
+        const params = new URLSearchParams(window.location.search);
+        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
+        if (imageUrl.includes("?")) {
+            imageUrl += "&auto=format&q=20"; // 补全 imgix 参数
+        }
+        image.src = imageUrl;
+
+        image.onload = () => {
+            const maxWidth = 300; // 调整为 WebView 宽度
+            const scale = Math.min(maxWidth / image.width, 1);
+            const newWidth = image.width * scale;
+            const newHeight = image.height * scale;
+
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.drawImage(image, 0, 0, newWidth, newHeight);
+        };
+
+        // 点击标记点
+        canvas.addEventListener("click", (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // 绘制红点
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, 2 * Math.PI); // 半径为 5 的红点
+            ctx.fillStyle = "red";
+            ctx.fill();
+        });
+    </script>
+</body>
+</html>
