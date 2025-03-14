@@ -1,93 +1,90 @@
 <!DOCTYPE html>
 <html>
 <body>
-    <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- 设置边框以可视化 Canvas 区域 / Set border to visualize Canvas area -->
+    <canvas id="canvas" style="border: 1px solid black;"></canvas>
+    <button id="confirmButton" style="display: none;">确认框选 / Confirm Selection</button>
     <script>
-        const canvas = document.getElementById("canvas"); // 获取 Canvas 元素 / Get Canvas element
-        const ctx = canvas.getContext("2d"); // 获取 2D 绘图上下文 / Get 2D drawing context
-        let image = new Image(); // 创建图片对象 / Create image object
-        let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let image = new Image();
+        let points = [];
+        const confirmButton = document.getElementById("confirmButton");
 
-        // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/300";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20"; // 如果缺少参数，添加 imgix 优化参数 / Add imgix optimization parameters if missing
+                imageUrl += "?auto=format&q=20";
             }
         }
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 345; // 设置最大宽度为 345px，与 Adalo 图片组件一致 / Set max width to 345px, matching Adalo image component
-            const maxHeight = 250; // 设置最大高度为 250px，与 Adalo 图片组件一致 / Set max height to 250px, matching Adalo image component
-            const scale = Math.min(maxWidth / image.width, maxHeight / image.height); // 计算缩放比例以保持纵横比 / Calculate scale to maintain aspect ratio
-            const newWidth = image.width * scale; // 计算新宽度 / Calculate new width
-            const newHeight = image.height * scale; // 计算新高度 / Calculate new height
+            const maxWidth = 345;
+            const maxHeight = 250;
+            const scale = Math.min(maxWidth / image.width, maxHeight / image.height);
+            const newWidth = image.width * scale;
+            const newHeight = image.height * scale;
 
-            canvas.width = newWidth; // 设置 Canvas 宽度 / Set Canvas width
-            canvas.height = newHeight; // 设置 Canvas 高度 / Set Canvas height
-            ctx.drawImage(image, 0, 0, newWidth, newHeight); // 绘制图片 / Draw image
+            canvas.width = newWidth;
+            canvas.height = newHeight;
+            ctx.drawImage(image, 0, 0, newWidth, newHeight);
 
-            console.log("Canvas initialized:", canvas.width, canvas.height); // 调试：打印 Canvas 初始化信息 / Debug: Log Canvas initialization info
+            console.log("Canvas initialized:", canvas.width, canvas.height);
         };
 
-        // 计算两点之间的距离 / Calculate distance between two points
         function getDistance(p1, p2) {
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
         function handleInteraction(e) {
-            e.preventDefault(); // 防止默认触摸行为 / Prevent default touch behavior
-            const rect = canvas.getBoundingClientRect(); // 获取 Canvas 的边界矩形 / Get Canvas bounding rectangle
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left; // 计算 x 坐标 / Calculate x coordinate
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top; // 计算 y 坐标 / Calculate y coordinate
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
 
-            // 存储点击点 / Store click point
             points.push({ x: x, y: y });
 
-            // 重新绘制图片、红点和多边形 / Redraw image, red points, and polygon
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布 / Clear canvas
-            ctx.drawImage(image, 0, 0, canvas.width, canvas.height); // 重新绘制图片 / Redraw image
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
 
-            // 绘制红点 / Draw red points
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, 3, 0, 2 * Math.PI); // 绘制半径为 3 的红点 / Draw red dot with radius 3
+                ctx.arc(point.x, point.y, 1, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
 
-            // 连接点形成多边形 / Connect points to form polygon
             if (points.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(points[0].x, points[0].y); // 从第一个点开始 / Start from the first point
+                ctx.moveTo(points[0].x, points[0].y);
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x, points[i].y); // 连接到下一个点 / Connect to the next point
+                    ctx.lineTo(points[i].x, points[i].y);
                 }
-                // 至少 4 个点，且最后一个点与第一个点接近时闭合 / Close polygon if at least 4 points and last point is close to first
                 if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 20; // 距离阈值，单位像素，可调整 / Distance threshold in pixels, adjustable
+                    const distanceThreshold = 20;
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
-                        ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                        ctx.strokeStyle = "lightblue";
                         ctx.stroke();
+                        confirmButton.style.display = "block"; // 显示确认按钮 / Show confirm button
                     }
                 }
             }
 
-            // 调试：打印点击位置到控制台 / Debug: Log click position to console
             console.log("Clicked at:", x, y);
         }
 
-        // 支持点击和触摸事件 / Support click and touch events
         canvas.addEventListener("click", handleInteraction);
         canvas.addEventListener("touchstart", handleInteraction);
 
-        // 调试：打印 URL 到控制台 / Debug: Log URL to console
+        confirmButton.addEventListener("click", () => {
+            console.log("Selection confirmed with points:", points);
+            confirmButton.style.display = "none"; // 隐藏确认按钮 / Hide confirm button
+        });
+
         console.log("Image URL:", imageUrl);
     </script>
 </body>
