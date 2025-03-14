@@ -3,76 +3,76 @@
 <head>
     <style>
         #canvasContainer {
-            position: relative; /* For absolute positioning of buttons */
-            width: 600px; /* Fixed canvas width */
-            height: 450px; /* Fixed canvas height */
-            overflow: hidden; /* Hide overflow for dragging */
-            border: 1px solid black; /* Border to visualize area */
+            position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
+            width: 600px; /* 固定画布宽度 / Fixed canvas width */
+            height: 450px; /* 固定画布高度 / Fixed canvas height */
+            overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
+            border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
         }
         #canvas {
-            position: absolute; /* Allow dragging */
+            position: absolute; /* 允许拖动 / Allow dragging */
             top: 0;
             left: 0;
         }
         #buttons {
-            margin-top: 10px; /* Margin between buttons and container */
-            text-align: center; /* Center align */
-            display: none; /* Default hidden */
+            margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
+            text-align: center; /* 居中对齐 / Center align */
+            display: none; /* 默认隐藏 / Default hidden */
         }
         #zoomButtons {
-            position: absolute; /* Position buttons on top of canvas */
+            position: absolute; /* 将按钮定位在画布上 / Position buttons on top of canvas */
             top: 10px;
             right: 10px;
             display: flex;
             flex-direction: column;
         }
         #confirmButton, #resetButton {
-            padding: 8px 16px; /* Button padding */
-            margin: 5px 0; /* Button spacing */
-            font-size: 14px; /* Font size */
-            cursor: pointer; /* Cursor style */
+            padding: 8px 16px; /* 按钮内边距 / Button padding */
+            margin: 5px 0; /* 按钮间距 / Button spacing */
+            font-size: 14px; /* 字体大小 / Font size */
+            cursor: pointer; /* 鼠标指针样式 / Cursor style */
         }
         #zoomInButton, #zoomOutButton {
-            width: 40px; /* Circular button size */
-            height: 40px; /* Circular button size */
-            border-radius: 50%; /* Make circular */
-            border: 1px solid #000; /* Border for visibility */
-            background: #fff; /* White background */
-            margin: 5px 0; /* Button spacing */
-            font-size: 20px; /* Symbol size */
-            display: flex; /* Use flex to center content */
-            justify-content: center; /* Center horizontally */
-            align-items: center; /* Center vertically */
-            cursor: pointer; /* Cursor style */
+            width: 40px; /* 圆形按钮大小 / Circular button size */
+            height: 40px; /* 圆形按钮大小 / Circular button size */
+            border-radius: 50%; /* 设为圆形 / Make circular */
+            border: 1px solid #000; /* 边框增加可见性 / Border for visibility */
+            background: #fff; /* 白色背景 / White background */
+            margin: 5px 0; /* 按钮间距 / Button spacing */
+            font-size: 20px; /* 符号大小 / Symbol size */
+            display: flex; /* 使用 flex 布局居中 / Use flex to center content */
+            justify-content: center; /* 水平居中 / Center horizontally */
+            align-items: center; /* 垂直居中 / Center vertically */
+            cursor: pointer; /* 鼠标指针样式 / Cursor style */
         }
         #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc; /* Gray background when disabled */
-            cursor: not-allowed; /* Disabled cursor */
+            background: #ccc; /* 禁用时灰色背景 / Gray background when disabled */
+            cursor: not-allowed; /* 禁用时鼠标样式 / Disabled cursor */
         }
-        @media (max-width: 768px) { /* Mobile style optimization */
+        @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
             #canvasContainer {
-                width: 90vw; /* 90% of viewport width */
-                height: 60vh; /* 60% of viewport height */
+                width: 90vw; /* 占视口宽度90% / 90% of viewport width */
+                height: 60vh; /* 占视口高度60% / 60% of viewport height */
             }
             #buttons {
-                position: fixed; /* Fixed position */
-                bottom: 10px; /* Bottom margin */
-                left: 50%; /* Center */
-                transform: translateX(-50%); /* Horizontal center */
-                width: 80%; /* Width 80% of screen */
+                position: fixed; /* 固定位置 / Fixed position */
+                bottom: 10px; /* 底部间距 / Bottom margin */
+                left: 50%; /* 居中 / Center */
+                transform: translateX(-50%); /* 水平居中 / Horizontal center */
+                width: 80%; /* 宽度占屏幕80% / Width 80% of screen */
             }
             #confirmButton, #resetButton {
-                width: 45%; /* Each button takes 45% */
-                box-sizing: border-box; /* Include padding and border in width */
+                width: 45%; /* 每个按钮占45% / Each button takes 45% */
+                box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
             #zoomButtons {
                 top: 5px;
                 right: 5px;
             }
             #zoomInButton, #zoomOutButton {
-                width: 30px; /* Smaller size for mobile */
+                width: 30px; /* 手机端更小尺寸 / Smaller size for mobile */
                 height: 30px;
-                font-size: 16px;
+                font-size: 16px; /* 手机端更小符号 / Smaller symbol for mobile */
             }
         }
     </style>
@@ -90,44 +90,44 @@
         <button id="resetButton">Reset</button>
     </div>
     <script>
-        const canvasContainer = document.getElementById("canvasContainer"); // Get canvas container
-        const canvas = document.getElementById("canvas"); // Get Canvas element
-        const ctx = canvas.getContext("2d"); // Get 2D drawing context
-        let image = new Image(); // Create image object
-        let points = []; // Array to store click point coordinates
-        let isClosed = false; // Flag to indicate if polygon is closed
-        let imageScale = 1; // Zoom scale for image only
-        let originX = 0; // Original x offset
-        let originY = 0; // Original y offset
-        let baseWidth, baseHeight; // Base dimensions
-        let regions = []; // Array to store multiple selected regions
-        let isDragging = false; // Flag for dragging
-        let startX = 0; // Start x position for dragging
-        let startY = 0; // Start y position for dragging
-        const confirmButton = document.getElementById("confirmButton"); // Confirm button
-        const resetButton = document.getElementById("resetButton"); // Reset button
-        const zoomInButton = document.getElementById("zoomInButton"); // Zoom in button
-        const zoomOutButton = document.getElementById("zoomOutButton"); // Zoom out button
-        const buttonsDiv = document.getElementById("buttons"); // Buttons container
-        const pixelRatio = window.devicePixelRatio || 1; // Get device pixel ratio
+        const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
+        const canvas = document.getElementById("canvas"); // 获取画布元素 / Get Canvas element
+        const ctx = canvas.getContext("2d"); // 获取 2D 绘图上下文 / Get 2D drawing context
+        let image = new Image(); // 创建图片对象 / Create image object
+        let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
+        let isClosed = false; // 标记多边形是否闭合 / Flag to indicate if polygon is closed
+        let imageScale = 1; // 仅用于图片的缩放比例 / Zoom scale for image only
+        let originX = 0; // 原始 x 偏移 / Original x offset
+        let originY = 0; // 原始 y 偏移 / Original y offset
+        let baseWidth, baseHeight; // 基础尺寸 / Base dimensions
+        let regions = []; // 存储多个框选区域 / Array to store multiple selected regions
+        let isDragging = false; // 拖动标志 / Flag for dragging
+        let startX = 0; // 拖动起始 x 位置 / Start x position for dragging
+        let startY = 0; // 拖动起始 y 位置 / Start y position for dragging
+        const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
+        const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
+        const zoomInButton = document.getElementById("zoomInButton"); // 放大按钮 / Zoom in button
+        const zoomOutButton = document.getElementById("zoomOutButton"); // 缩小按钮 / Zoom out button
+        const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
+        const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
 
-        // Dynamically receive URL parameters
+        // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20";
+                imageUrl += "?auto=format&q=20"; // 如果缺少参数，添加 imgix 优化参数 / Add imgix optimization parameters if missing
             }
         }
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // Set base resolution to 600px
-            const maxHeight = 450; // Set base resolution to 450px
-            const imageRatio = image.width / image.height; // Calculate image aspect ratio
-            const canvasRatio = maxWidth / maxHeight; // Calculate canvas aspect ratio
+            const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
+            const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
+            const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
+            const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
-            // Adjust dimensions to maintain aspect ratio
+            // 根据宽高比调整尺寸以保持比例 / Adjust dimensions to maintain aspect ratio
             if (imageRatio > canvasRatio) {
                 baseWidth = maxWidth;
                 baseHeight = maxWidth / imageRatio;
@@ -136,35 +136,35 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // Fit image to canvas while maintaining aspect ratio
-            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // Use 90% of screen width or maxWidth
-            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of screen height or maxHeight
+            // 适配画布尺寸，保持图片完整显示 / Fit image to canvas while maintaining aspect ratio
+            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 使用屏幕宽度的90%或最大宽度 / Use 90% of screen width or maxWidth
+            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // 使用屏幕高度的60%或最大高度 / Use 60% of screen height or maxHeight
             const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
-            baseWidth *= fitScale;
-            baseHeight *= fitScale;
+            baseWidth = canvasWidth;
+            baseHeight = baseHeight * fitScale;
             imageScale = fitScale;
 
-            canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
-            canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
-            canvas.style.width = `${baseWidth}px`; // Set CSS width to logical pixels
-            canvas.style.height = `${baseHeight}px`; // Set CSS height to logical pixels
-            ctx.scale(pixelRatio, pixelRatio); // Scale context to match physical pixels
-            updateZoomButtons(); // Initial zoom button state
-            draw(); // Initial draw
+            canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
+            canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
+            canvas.style.width = `${baseWidth}px`; // 设置 CSS 宽度为逻辑像素 / Set CSS width to logical pixels
+            canvas.style.height = `${baseHeight}px`; // 设置 CSS 高度为逻辑像素 / Set CSS height to logical pixels
+            ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
+            updateZoomButtons(); // 初始化缩放按钮状态 / Initial zoom button state
+            draw(); // 初始绘制 / Initial draw
         };
 
         image.onerror = () => {
-            console.error("Image failed to load:", imageUrl);
-            buttonsDiv.style.display = "block"; // Show buttons even if image fails to load
-            draw(); // Force draw
+            console.error("图片加载失败 / Image failed to load:", imageUrl);
+            buttonsDiv.style.display = "block"; // 即使图片加载失败，也显示按钮 / Show buttons even if image fails to load
+            draw(); // 强制绘制 / Force draw
         };
 
-        // Calculate distance between two points
+        // 计算两点之间的距离 / Calculate distance between two points
         function getDistance(p1, p2) {
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        // Update zoom button states
+        // 更新缩放按钮状态 / Update zoom button states
         function updateZoomButtons() {
             if (imageScale >= 3) {
                 zoomInButton.classList.add("disabled");
@@ -182,25 +182,25 @@
             }
         }
 
-        // Draw image and polygon
+        // 绘制图片和多边形 / Draw image and polygon
         function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // Clear canvas using logical pixels
-            ctx.save(); // Save current state
-            ctx.scale(imageScale, imageScale); // Apply zoom to image only
-            ctx.translate(originX / pixelRatio, originY / pixelRatio); // Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // Draw image
-            ctx.restore(); // Restore state
+            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 使用逻辑像素清除画布 / Clear canvas using logical pixels
+            ctx.save(); // 保存当前状态 / Save current state
+            ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
+            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片 / Draw image
+            ctx.restore(); // 恢复状态 / Restore state
 
-            // Draw red points with fixed size
-            const dotRadius = 3; // Fixed dot radius to 3 pixels, independent of zoom
+            // 使用固定大小绘制红点 / Draw red points with fixed size
+            const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // Fixed red dot position and size
+                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // 固定红点位置和大小 / Fixed red dot position and size
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
 
-            // Draw all confirmed regions
+            // 绘制所有已确认的框选区域 / Draw all confirmed regions
             regions.forEach(region => {
                 ctx.beginPath();
                 ctx.moveTo(region[0].x - originX, region[0].y - originY);
@@ -208,11 +208,11 @@
                     ctx.lineTo(region[i].x - originX, region[i].y - originY);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "lightblue";
+                ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
                 ctx.stroke();
             });
 
-            // Draw the current polygon being selected
+            // 绘制当前正在框选的多边形 / Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
                 ctx.moveTo(points[0].x - originX, points[0].y - originY);
@@ -238,7 +238,7 @@
             }
         }
 
-        // Handle click events (PC and mobile devices)
+        // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
         function handleInteraction(e) {
             if (isClosed) return;
 
@@ -252,7 +252,7 @@
             console.log("Clicked at:", x, y);
         }
 
-        // Handle dragging for panning
+        // 处理拖动以平移 / Handle dragging for panning
         function startDragging(e) {
             if (isClosed) return;
 
@@ -276,7 +276,7 @@
             originX = x - startX;
             originY = y - startY;
 
-            // Limit dragging to prevent image from moving completely out of view
+            // 限制拖动范围，防止图片完全移出视野 / Limit dragging to prevent image from moving completely out of view
             const scaledWidth = baseWidth * imageScale;
             const scaledHeight = baseHeight * imageScale;
             const maxX = Math.max(0, scaledWidth - baseWidth);
@@ -287,13 +287,13 @@
             draw();
         }
 
-        // Mouse events for dragging
+        // 鼠标事件用于拖动 / Mouse events for dragging
         canvas.addEventListener("mousedown", startDragging);
         canvas.addEventListener("mousemove", drag);
         canvas.addEventListener("mouseup", stopDragging);
         canvas.addEventListener("mouseleave", stopDragging);
 
-        // Touch events for dragging
+        // 触摸事件用于拖动 / Touch events for dragging
         canvas.addEventListener("touchstart", (e) => {
             handleInteraction(e);
             startDragging(e);
@@ -301,10 +301,10 @@
         canvas.addEventListener("touchmove", drag);
         canvas.addEventListener("touchend", stopDragging);
 
-        // Click event for selecting points
+        // 点击事件用于选择点 / Click event for selecting points
         canvas.addEventListener("click", handleInteraction);
 
-        // Confirm button click event
+        // 确定按钮点击事件 / Confirm button click event
         confirmButton.addEventListener("click", () => {
             if (isClosed) {
                 regions.push([...points]);
@@ -316,7 +316,7 @@
             }
         });
 
-        // Reset button click event
+        // 重选按钮点击事件 / Reset button click event
         resetButton.addEventListener("click", () => {
             points = [];
             isClosed = false;
@@ -324,21 +324,21 @@
             draw();
         });
 
-        // Zoom in button click event
+        // 放大按钮点击事件 / Zoom in button click event
         zoomInButton.addEventListener("click", () => {
             if (imageScale < 3) {
-                imageScale *= 1.2; // Increase scale by 20%
-                console.log("Zoom In:", imageScale); // Debug zoom scale
+                imageScale *= 1.2; // 放大 20% / Increase scale by 20%
+                console.log("Zoom In:", imageScale); // 调试缩放值 / Debug zoom scale
                 updateZoomButtons();
                 draw();
             }
         });
 
-        // Zoom out button click event
+        // 缩小按钮点击事件 / Zoom out button click event
         zoomOutButton.addEventListener("click", () => {
             if (imageScale > 0.5) {
-                imageScale /= 1.2; // Decrease scale by 20%
-                console.log("Zoom Out:", imageScale); // Debug zoom scale
+                imageScale /= 1.2; // 缩小 20% / Decrease scale by 20%
+                console.log("Zoom Out:", imageScale); // 调试缩放值 / Debug zoom scale
                 updateZoomButtons();
                 draw();
             }
