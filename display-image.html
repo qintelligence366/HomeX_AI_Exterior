@@ -78,7 +78,12 @@
             canvas.height = baseHeight; // 设置 Canvas 高度 / Set Canvas height
             draw(); // 初始化绘制 / Initial draw
 
-            console.log("Canvas initialized:", canvas.width, canvas.height); // 调试：打印 Canvas 初始化信息 / Debug: Log Canvas initialization info
+            console.log("Image loaded successfully:", imageUrl); // 调试：确认图片加载 / Debug: Confirm image load
+        };
+
+        image.onerror = () => {
+            console.error("Image failed to load:", imageUrl); // 调试：记录图片加载失败 / Debug: Log image load failure
+            buttonsDiv.style.display = "block"; // 即使图片加载失败，也显示按钮 / Show buttons even if image fails to load
         };
 
         // 计算两点之间的距离 / Calculate distance between two points
@@ -197,7 +202,7 @@
             hammer.on("pinch", (e) => {
                 console.log("Pinch detected:", e.scale); // 调试：检查缩放事件 / Debug: Log pinch event
                 scale = lastScale * e.scale; // 计算当前缩放比例 / Calculate current scale
-                scale = Math.min(Math.max(1, scale), 3); // 限制缩放范围 1x 到 3x / Limit zoom range from 1x to 3x
+                scale = Math.min(Math.max(0.5, scale), 3); // 扩展缩放范围 0.5x 到 3x / Extend zoom range from 0.5x to 3x
                 draw(); // 重新绘制 / Redraw
             });
             hammer.on("pinchend", (e) => {
