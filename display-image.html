@@ -4,8 +4,8 @@
     <style>
         #canvasContainer {
             position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
-            width: 600px; /* 固定画布宽度 / Fixed canvas width */
-            height: 450px; /* 固定画布高度 / Fixed canvas height */
+            width: 360px; /* 固定画布宽度，与 WebView 一致 / Fixed canvas width, matches WebView */
+            height: 270px; /* 固定画布高度，与 WebView 一致 / Fixed canvas height, matches WebView */
             overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
             border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
         }
@@ -17,20 +17,9 @@
         #buttons {
             margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
             text-align: center; /* 居中对齐 / Center align */
-            display: none; /* 默认隐藏 / Default hidden */
-        }
-        #zoomButtons {
-            position: absolute; /* 将按钮定位在画布上 / Position buttons on top of canvas */
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
-        }
-        #confirmButton, #resetButton {
-            padding: 8px 16px; /* 按钮内边距 / Button padding */
-            margin: 5px 0; /* 按钮间距 / Button spacing */
-            font-size: 14px; /* 字体大小 / Font size */
-            cursor: pointer; /* 鼠标指针样式 / Cursor style */
+            display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
+            justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
+            gap: 10px; /* 按钮间距 / Button spacing */
         }
         #zoomInButton, #zoomOutButton {
             width: 40px; /* 圆形按钮大小 / Circular button size */
@@ -38,7 +27,6 @@
             border-radius: 50%; /* 设为圆形 / Make circular */
             border: 1px solid #000; /* 边框增加可见性 / Border for visibility */
             background: #fff; /* 白色背景 / White background */
-            margin: 5px 0; /* 按钮间距 / Button spacing */
             font-size: 20px; /* 符号大小 / Symbol size */
             display: flex; /* 使用 flex 布局居中 / Use flex to center content */
             justify-content: center; /* 水平居中 / Center horizontally */
@@ -48,6 +36,11 @@
         #zoomInButton.disabled, #zoomOutButton.disabled {
             background: #ccc; /* 禁用时灰色背景 / Gray background when disabled */
             cursor: not-allowed; /* 禁用时鼠标样式 / Disabled cursor */
+        }
+        #confirmButton, #resetButton {
+            padding: 8px 16px; /* 按钮内边距 / Button padding */
+            font-size: 14px; /* 字体大小 / Font size */
+            cursor: pointer; /* 鼠标指针样式 / Cursor style */
         }
         @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
             #canvasContainer {
@@ -61,18 +54,14 @@
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
                 width: 80%; /* 宽度占屏幕80% / Width 80% of screen */
             }
-            #confirmButton, #resetButton {
-                width: 45%; /* 每个按钮占45% / Each button takes 45% */
-                box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
-            }
-            #zoomButtons {
-                top: 5px;
-                right: 5px;
-            }
             #zoomInButton, #zoomOutButton {
                 width: 30px; /* 手机端更小尺寸 / Smaller size for mobile */
                 height: 30px;
                 font-size: 16px; /* 手机端更小符号 / Smaller symbol for mobile */
+            }
+            #confirmButton, #resetButton {
+                width: 45%; /* 每个按钮占45% / Each button takes 45% */
+                box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
         }
     </style>
@@ -80,12 +69,10 @@
 <body>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
-        <div id="zoomButtons">
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
-        </div>
     </div>
     <div id="buttons">
+        <button id="zoomInButton">+</button>
+        <button id="zoomOutButton">-</button>
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
     </div>
@@ -104,6 +91,10 @@
         let isDragging = false; // 拖动标志 / Flag for dragging
         let startX = 0; // 拖动起始 x 位置 / Start x position for dragging
         let startY = 0; // 拖动起始 y 位置 / Start y position for dragging
+        let touchStartTime = 0; // 触摸开始时间 / Touch start time
+        let touchStartX = 0; // 触摸开始 x 位置 / Touch start x position
+        let touchStartY = 0; // 触摸开始 y 位置 / Touch start y position
+        let isTouchClick = false; // 是否为点击 / Whether it's a click
         const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
         const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
         const zoomInButton = document.getElementById("zoomInButton"); // 放大按钮 / Zoom in button
@@ -122,8 +113,8 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
-            const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
+            const maxWidth = 360; // 设置基础分辨率为 360px，与 WebView 一致 / Set base resolution to 360px, matches WebView
+            const maxHeight = 270; // 设置基础分辨率为 270px，与 WebView 一致 / Set base resolution to 270px, matches WebView
             const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
             const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
@@ -136,9 +127,9 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // 适配画布尺寸，保持图片完整显示 / Fit image to canvas while maintaining aspect ratio
-            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 使用屏幕宽度的90%或最大宽度 / Use 90% of screen width or maxWidth
-            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // 使用屏幕高度的60%或最大高度 / Use 60% of screen height or maxHeight
+            // 适配画布尺寸，确保图片填满 WebView / Fit image to canvas to fill WebView
+            const canvasWidth = maxWidth; // 直接使用 WebView 宽度 / Use WebView width directly
+            const canvasHeight = maxHeight; // 直接使用 WebView 高度 / Use WebView height directly
             const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
             baseWidth = canvasWidth;
             baseHeight = baseHeight * fitScale;
@@ -188,14 +179,14 @@
             ctx.save(); // 保存当前状态 / Save current state
             ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
             ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片 / Draw image
+            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // 绘制图片 / Draw image
             ctx.restore(); // 恢复状态 / Restore state
 
-            // 使用固定大小绘制红点 / Draw red points with fixed size
+            // 调整红点位置随图片移动 / Adjust red point position to move with image
             const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // 固定红点位置和大小 / Fixed red dot position and size
+                ctx.arc((point.x - originX) / imageScale, (point.y - originY) / imageScale, dotRadius, 0, 2 * Math.PI); // 红点位置随缩放调整 / Red dot position adjusted with zoom
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
@@ -203,9 +194,9 @@
             // 绘制所有已确认的框选区域 / Draw all confirmed regions
             regions.forEach(region => {
                 ctx.beginPath();
-                ctx.moveTo(region[0].x - originX, region[0].y - originY);
+                ctx.moveTo((region[0].x - originX) / imageScale, (region[0].y - originY) / imageScale);
                 for (let i = 1; i < region.length; i++) {
-                    ctx.lineTo(region[i].x - originX, region[i].y - originY);
+                    ctx.lineTo((region[i].x - originX) / imageScale, (region[i].y - originY) / imageScale);
                 }
                 ctx.closePath();
                 ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
@@ -215,9 +206,9 @@
             // 绘制当前正在框选的多边形 / Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(points[0].x - originX, points[0].y - originY);
+                ctx.moveTo((points[0].x - originX) / imageScale, (points[0].y - originY) / imageScale);
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x - originX, points[i].y - originY);
+                    ctx.lineTo((points[i].x - originX) / imageScale, (points[i].y - originY) / imageScale);
                 }
                 if (isClosed) {
                     ctx.closePath();
@@ -226,7 +217,7 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 20;
+                    const distanceThreshold = 20; // 距离阈值，单位像素，可调整 / Distance threshold in pixels, adjustable
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
@@ -247,7 +238,20 @@
             const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
             const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
 
-            points.push({ x: x, y: y });
+            // 区分点击和拖动 / Distinguish click and drag
+            if (e.type === "touchstart") {
+                touchStartTime = Date.now(); // 记录触摸开始时间 / Record touch start time
+                touchStartX = x; // 记录触摸开始 x 位置 / Record touch start x position
+                touchStartY = y; // 记录触摸开始 y 位置 / Record touch start y position
+                isTouchClick = true; // 初始假设为点击 / Initially assume it's a click
+            } else if (e.type === "touchend" || e.type === "mouseup") {
+                const touchDuration = Date.now() - touchStartTime; // 计算触摸持续时间 / Calculate touch duration
+                const moveDistance = Math.sqrt(Math.pow(x - touchStartX, 2) + Math.pow(y - touchStartY, 2)); // 计算移动距离 / Calculate move distance
+                if (touchDuration < 300 && moveDistance < 10 && isTouchClick) { // 短时间小移动视为点击 / Short duration and small move considered a click
+                    points.push({ x: x, y: y }); // 添加红点 / Add red point
+                }
+                isTouchClick = false; // 重置点击标志 / Reset click flag
+            }
             draw();
             console.log("Clicked at:", x, y);
         }
@@ -293,13 +297,13 @@
         canvas.addEventListener("mouseup", stopDragging);
         canvas.addEventListener("mouseleave", stopDragging);
 
-        // 触摸事件用于拖动 / Touch events for dragging
+        // 触摸事件用于拖动和点击 / Touch events for dragging and clicking
         canvas.addEventListener("touchstart", (e) => {
-            handleInteraction(e);
             startDragging(e);
+            handleInteraction(e);
         });
         canvas.addEventListener("touchmove", drag);
-        canvas.addEventListener("touchend", stopDragging);
+        canvas.addEventListener("touchend", handleInteraction);
 
         // 点击事件用于选择点 / Click event for selecting points
         canvas.addEventListener("click", handleInteraction);
@@ -310,7 +314,7 @@
                 regions.push([...points]);
                 points = [];
                 isClosed = false;
-                buttonsDiv.style.display = "none";
+                buttonsDiv.style.display = "flex"; // 保持显示 / Keep displayed
                 draw();
                 console.log("Regions confirmed:", regions);
             }
@@ -320,7 +324,7 @@
         resetButton.addEventListener("click", () => {
             points = [];
             isClosed = false;
-            buttonsDiv.style.display = "none";
+            buttonsDiv.style.display = "flex"; // 保持显示 / Keep displayed
             draw();
         });
 
