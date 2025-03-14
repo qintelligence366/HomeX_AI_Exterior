@@ -41,7 +41,7 @@
         let image = new Image(); // 创建图片对象 / Create image object
         let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
         let isClosed = false; // 标记多边形是否闭合 / Flag to indicate if polygon is closed
-        let scale = 1; // 缩放比例 / Zoom scale
+        let scale = 1; // 缩放比例，仅用于图片 / Zoom scale for image only
         let originX = 0; // 原始 x 偏移 / Original x offset
         let originY = 0; // 原始 y 偏移 / Original y offset
         let baseWidth, baseHeight; // 基础尺寸 / Base dimensions
@@ -49,6 +49,7 @@
         const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
         const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
         const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
+        const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
 
         // 确保 DOM 加载完成后再绑定按钮 / Ensure DOM is loaded before binding buttons
         document.addEventListener("DOMContentLoaded", () => {
@@ -68,22 +69,24 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 345; // 设置最大宽度为 345px，与 Adalo 图片组件一致 / Set max width to 345px, matching Adalo image component
-            const maxHeight = 250; // 设置最大高度为 250px，与 Adalo 图片组件一致 / Set max height to 250px, matching Adalo image component
+            const maxWidth = 345 * pixelRatio; // 考虑像素比，增加分辨率 / Adjust for pixel ratio to increase resolution
+            const maxHeight = 250 * pixelRatio; // 考虑像素比，增加分辨率 / Adjust for pixel ratio to increase resolution
             const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // 计算缩放比例以保持纵横比 / Calculate scale to maintain aspect ratio
             baseWidth = image.width * scaleRatio; // 计算基础宽度 / Calculate base width
             baseHeight = image.height * scaleRatio; // 计算基础高度 / Calculate base height
 
-            canvas.width = baseWidth; // 设置 Canvas 宽度 / Set Canvas width
-            canvas.height = baseHeight; // 设置 Canvas 高度 / Set Canvas height
+            canvas.width = baseWidth * pixelRatio; // 增加 Canvas 宽度以支持高 DPI / Increase Canvas width for high DPI
+            canvas.height = baseHeight * pixelRatio; // 增加 Canvas 高度以支持高 DPI / Increase Canvas height for high DPI
+            ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
             draw(); // 初始化绘制 / Initial draw
 
-            console.log("Image loaded successfully:", imageUrl); // 调试：确认图片加载 / Debug: Confirm image load
+            console.log("Canvas initialized:", canvas.width, canvas.height); // 调试：打印 Canvas 初始化信息 / Debug: Log Canvas initialization info
         };
 
         image.onerror = () => {
             console.error("Image failed to load:", imageUrl); // 调试：记录图片加载失败 / Debug: Log image load failure
             buttonsDiv.style.display = "block"; // 即使图片加载失败，也显示按钮 / Show buttons even if image fails to load
+            draw(); // 强制绘制 / Force draw
         };
 
         // 计算两点之间的距离 / Calculate distance between two points
@@ -93,18 +96,18 @@
 
         // 绘制图片和多边形 / Draw image and polygon
         function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // 清除画布 / Clear canvas
+            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 清除画布，使用逻辑像素 / Clear canvas using logical pixels
             ctx.save(); // 保存当前状态 / Save current state
-            ctx.scale(scale, scale); // 应用缩放 / Apply zoom
-            ctx.translate(originX, originY); // 应用偏移 / Apply offset
+            ctx.scale(scale, scale); // 仅缩放图片 / Scale image only
+            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
             ctx.drawImage(image, 0, 0, baseWidth / scale, baseHeight / scale); // 绘制图片 / Draw image
+            ctx.restore(); // 恢复状态 / Restore state
 
             // 绘制红点 / Draw red points
-            const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
-            const dotRadius = 3 * pixelRatio; // 调整红点大小为 3 像素，乘以像素比 / Adjust dot radius to 3 pixels, multiplied by pixel ratio
+            const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x / scale - originX, point.y / scale - originY, dotRadius, 0, 2 * Math.PI); // 红点半径 / Red dot radius
+                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // 固定红点位置和大小 / Fixed red dot position and size
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
@@ -112,9 +115,9 @@
             // 绘制所有已确认的框选区域 / Draw all confirmed regions
             regions.forEach(region => {
                 ctx.beginPath();
-                ctx.moveTo((region[0].x - originX) / scale, (region[0].y - originY) / scale);
+                ctx.moveTo(region[0].x - originX, region[0].y - originY);
                 for (let i = 1; i < region.length; i++) {
-                    ctx.lineTo((region[i].x - originX) / scale, (region[i].y - originY) / scale);
+                    ctx.lineTo(region[i].x - originX, region[i].y - originY);
                 }
                 ctx.closePath();
                 ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
@@ -124,9 +127,9 @@
             // 绘制当前正在框选的多边形 / Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo((points[0].x - originX) / scale, (points[0].y - originY) / scale); // 从第一个点开始 / Start from the first point
+                ctx.moveTo(points[0].x - originX, points[0].y - originY); // 从第一个点开始 / Start from the first point
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo((points[i].x - originX) / scale, (points[i].y - originY) / scale); // 连接到下一个点 / Connect to the next point
+                    ctx.lineTo(points[i].x - originX, points[i].y - originY); // 连接到下一个点 / Connect to the next point
                 }
                 // 如果多边形已闭合，保持闭合状态 / If polygon is closed, maintain closed state
                 if (isClosed) {
@@ -146,7 +149,6 @@
                     }
                 }
             }
-            ctx.restore(); // 恢复状态 / Restore state
         }
 
         // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
