@@ -24,7 +24,7 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 300; // 调整为 WebView 宽度
+            const maxWidth = 345; // 调整为 WebView 宽度
             const scale = Math.min(maxWidth / image.width, 1);
             const newWidth = image.width * scale;
             const newHeight = image.height * scale;
@@ -37,11 +37,12 @@
             console.log("Canvas initialized:", canvas.width, canvas.height);
         };
 
-        // 点击标记多个点
-        canvas.addEventListener("click", (e) => {
+        // 处理点击事件（PC 和移动设备）
+        function handleInteraction(e) {
+            e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
+            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
 
             // 存储点击点
             points.push({ x: x, y: y });
@@ -58,7 +59,11 @@
 
             // 调试：打印点击位置到控制台
             console.log("Clicked at:", x, y);
-        });
+        }
+
+        // 支持点击和触摸事件
+        canvas.addEventListener("click", handleInteraction);
+        canvas.addEventListener("touchstart", handleInteraction);
 
         // 调试：打印 URL 到控制台
         console.log("Image URL:", imageUrl);
