@@ -1,20 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script> <!-- Include Hammer.js library -->
     <style>
+        #canvasContainer {
+            position: relative; /* For absolute positioning of buttons and sliders */
+            width: 600px; /* Fixed canvas width */
+            height: 450px; /* Fixed canvas height */
+            overflow: hidden; /* Hide overflow for scrolling */
+            border: 1px solid black; /* Border to visualize area */
+        }
+        #canvas {
+            position: absolute; /* Allow positioning with sliders */
+            top: 0;
+            left: 0;
+        }
         #buttons {
-            margin-top: 10px; /* Margin between buttons and Canvas */
+            margin-top: 10px; /* Margin between buttons and container */
             text-align: center; /* Center align */
             display: none; /* Default hidden */
         }
-        #confirmButton, #resetButton {
-            padding: 10px 20px; /* Button padding */
-            margin: 0 5px; /* Button spacing */
-            font-size: 16px; /* Font size */
+        #zoomButtons {
+            position: absolute; /* Position buttons on top of canvas */
+            top: 10px;
+            right: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
+            padding: 8px 16px; /* Button padding */
+            margin: 5px 0; /* Button spacing */
+            font-size: 14px; /* Font size */
             cursor: pointer; /* Cursor style */
         }
+        #horizontalSlider, #verticalSlider {
+            position: absolute;
+            background: #ccc; /* Slider background */
+            opacity: 0.7; /* Slightly transparent */
+        }
+        #horizontalSlider {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 10px;
+        }
+        #verticalSlider {
+            top: 0;
+            right: 0;
+            width: 10px;
+            height: 100%;
+        }
         @media (max-width: 768px) { /* Mobile style optimization */
+            #canvasContainer {
+                width: 90vw; /* 90% of viewport width */
+                height: 60vh; /* 60% of viewport height */
+            }
             #buttons {
                 position: fixed; /* Fixed position */
                 bottom: 10px; /* Bottom margin */
@@ -26,16 +65,33 @@
                 width: 45%; /* Each button takes 45% */
                 box-sizing: border-box; /* Include padding and border in width */
             }
+            #zoomButtons {
+                top: 5px;
+                right: 5px;
+            }
+            #zoomInButton, #zoomOutButton {
+                padding: 5px 10px; /* Smaller padding for mobile */
+                font-size: 12px; /* Smaller font for mobile */
+            }
         }
     </style>
 </head>
 <body>
-    <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- Set border to visualize Canvas area -->
+    <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+        <div id="zoomButtons">
+            <button id="zoomInButton">Zoom In</button>
+            <button id="zoomOutButton">Zoom Out</button>
+        </div>
+        <input type="range" id="horizontalSlider" min="0" max="100" value="0" style="display: none;">
+        <input type="range" id="verticalSlider" min="0" max="100" value="0" orient="vertical" style="display: none;">
+    </div>
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
     </div>
     <script>
+        const canvasContainer = document.getElementById("canvasContainer"); // Get canvas container
         const canvas = document.getElementById("canvas"); // Get Canvas element
         const ctx = canvas.getContext("2d"); // Get 2D drawing context
         let image = new Image(); // Create image object
@@ -48,15 +104,12 @@
         let regions = []; // Array to store multiple selected regions
         const confirmButton = document.getElementById("confirmButton"); // Confirm button
         const resetButton = document.getElementById("resetButton"); // Reset button
+        const zoomInButton = document.getElementById("zoomInButton"); // Zoom in button
+        const zoomOutButton = document.getElementById("zoomOutButton"); // Zoom out button
+        const horizontalSlider = document.getElementById("horizontalSlider"); // Horizontal slider
+        const verticalSlider = document.getElementById("verticalSlider"); // Vertical slider
         const buttonsDiv = document.getElementById("buttons"); // Buttons container
         const pixelRatio = window.devicePixelRatio || 1; // Get device pixel ratio
-
-        // Ensure DOM is loaded before binding buttons
-        document.addEventListener("DOMContentLoaded", () => {
-            if (!confirmButton || !resetButton) {
-                console.error("Buttons not found!");
-            }
-        });
 
         // Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
@@ -69,18 +122,19 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // Increase base resolution to 600px
-            const maxHeight = 450; // Increase base resolution to 450px
+            const maxWidth = 600; // Set base resolution to 600px
+            const maxHeight = 450; // Set base resolution to 450px
             const scaleRatio = Math.min(maxWidth / image.width, maxHeight / image.height); // Calculate scale to maintain aspect ratio
             baseWidth = image.width * scaleRatio; // Calculate base width
             baseHeight = image.height * scaleRatio; // Calculate base height
 
-            // Dynamically adjust initial scale to fit large images
-            imageScale = Math.min(canvas.clientWidth / baseWidth, canvas.clientHeight / baseHeight);
-            if (imageScale < 1) {
-                baseWidth *= imageScale;
-                baseHeight *= imageScale;
-            }
+            // Fit image to canvas while maintaining aspect ratio
+            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // Use 90% of screen width or maxWidth
+            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of screen height or maxHeight
+            const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
+            baseWidth = canvasWidth;
+            baseHeight = canvasHeight;
+            imageScale = fitScale;
 
             canvas.width = baseWidth * pixelRatio; // Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // Increase Canvas height for high DPI
@@ -99,6 +153,36 @@
         // Calculate distance between two points
         function getDistance(p1, p2) {
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
+        // Update slider visibility and values based on zoom
+        function updateSliders() {
+            const scaledWidth = baseWidth * imageScale;
+            const scaledHeight = baseHeight * imageScale;
+
+            // Horizontal slider
+            if (scaledWidth > baseWidth) {
+                horizontalSlider.style.display = "block";
+                const maxOffsetX = scaledWidth - baseWidth;
+                horizontalSlider.max = maxOffsetX;
+                originX = -horizontalSlider.value;
+            } else {
+                horizontalSlider.style.display = "none";
+                originX = 0;
+            }
+
+            // Vertical slider
+            if (scaledHeight > baseHeight) {
+                verticalSlider.style.display = "block";
+                const maxOffsetY = scaledHeight - baseHeight;
+                verticalSlider.max = maxOffsetY;
+                originY = -verticalSlider.value;
+            } else {
+                verticalSlider.style.display = "none";
+                originY = 0;
+            }
+
+            draw(); // Redraw with updated offsets
         }
 
         // Draw image and polygon
@@ -194,22 +278,23 @@
             draw();
         });
 
-        // Initialize Hammer.js for pinch-to-zoom
-        const hammer = new Hammer(canvas);
-        if (!hammer) {
-            console.error("Hammer.js failed to load!");
-        } else {
-            hammer.get('pinch').set({ enable: true });
-            let lastScale = 1;
-            hammer.on("pinch", (e) => {
-                imageScale = lastScale * e.scale;
-                imageScale = Math.min(Math.max(0.5, imageScale), 3);
-                draw();
-            });
-            hammer.on("pinchend", (e) => {
-                lastScale = imageScale;
-            });
-        }
+        // Zoom in button click event
+        zoomInButton.addEventListener("click", () => {
+            imageScale *= 1.2; // Increase scale by 20%
+            imageScale = Math.min(imageScale, 3); // Limit max zoom to 3x
+            updateSliders();
+        });
+
+        // Zoom out button click event
+        zoomOutButton.addEventListener("click", () => {
+            imageScale /= 1.2; // Decrease scale by 20%
+            imageScale = Math.max(imageScale, 0.5); // Limit min zoom to 0.5x
+            updateSliders();
+        });
+
+        // Handle slider input for scrolling
+        horizontalSlider.addEventListener("input", updateSliders);
+        verticalSlider.addEventListener("input", updateSliders);
 
         console.log("Image URL:", imageUrl);
     </script>
