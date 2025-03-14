@@ -9,7 +9,11 @@
         let image = new Image(); // 创建图片对象 / Create image object
         let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
         let isClosed = false; // 标记多边形是否闭合 / Flag to indicate if polygon is closed
-        const confirmButton = document.getElementById("confirmButton");
+        const confirmButton = document.getElementById("confirmButton"); // 确保按钮绑定 / Ensure button is bound
+
+        if (!confirmButton) {
+            console.error("Confirm button not found!"); // 调试：检查按钮是否存在 / Debug: Check if button exists
+        }
 
         // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
@@ -30,15 +34,10 @@
 
             canvas.width = newWidth; // 设置 Canvas 宽度 / Set Canvas width
             canvas.height = newHeight; // 设置 Canvas 高度 / Set Canvas height
-            ctx.drawImage(image, 0, 0, newWidth, newHeight); // 绘制图片 / Draw image
+            draw(); // 初始化绘制 / Initial draw
 
             console.log("Canvas initialized:", canvas.width, canvas.height); // 调试：打印 Canvas 初始化信息 / Debug: Log Canvas initialization info
         };
-
-        // 计算两点之间的距离 / Calculate distance between two points
-        function getDistance(p1, p2) {
-            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-        }
 
         // 绘制图片和多边形 / Draw image and polygon
         function draw() {
@@ -48,7 +47,7 @@
             // 绘制红点 / Draw red points
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x, point.y, 0.5, 0, 2 * Math.PI); // 调整红点半径为 0.5 像素 / Adjust red dot radius to 0.5 pixel
+                ctx.arc(point.x, point.y, 0.5, 0, 2 * Math.PI); // 红点半径为 0.5 像素 / Red dot radius set to 0.5 pixel
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
@@ -60,19 +59,17 @@
                 for (let i = 1; i < points.length; i++) {
                     ctx.lineTo(points[i].x, points[i].y); // 连接到下一个点 / Connect to the next point
                 }
-                // 如果多边形已闭合，保持闭合状态 / If polygon is closed, maintain closed state
                 if (isClosed) {
                     ctx.closePath();
-                    ctx.strokeStyle = "lightblue";
+                    ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
                     ctx.stroke();
-                    confirmButton.style.display = "block";
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
                     const distanceThreshold = 20; // 距离阈值，单位像素，可调整 / Distance threshold in pixels, adjustable
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
-                        ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                        ctx.strokeStyle = "lightblue";
                         ctx.stroke();
                         isClosed = true; // 标记多边形已闭合 / Mark polygon as closed
                         confirmButton.style.display = "block"; // 显示确认按钮 / Show confirm button
@@ -108,7 +105,6 @@
         confirmButton.addEventListener("click", () => {
             console.log("Selection confirmed with points:", points);
             confirmButton.style.display = "none"; // 隐藏确认按钮 / Hide confirm button
-            // 可在此处添加进一步逻辑，例如保存框选区域 / Add further logic here, such as saving the selected area
         });
 
         // 调试：打印 URL 到控制台 / Debug: Log URL to console
