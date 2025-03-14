@@ -136,13 +136,10 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // 适配画布尺寸，确保图片填满 canvasContainer / Fit image to fill canvasContainer
-            const canvasWidth = maxWidth; // 直接使用 canvasContainer 宽度 / Use canvasContainer width directly
-            const canvasHeight = maxHeight; // 直接使用 canvasContainer 高度 / Use canvasContainer height directly
-            const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
-            baseWidth = canvasWidth;
-            baseHeight = baseHeight * fitScale;
-            imageScale = fitScale;
+            // 适配画布尺寸，确保图片填满但不超过 canvasContainer / Fit image to fill canvasContainer without exceeding
+            const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight); // 确保不超过 600x450 / Ensure within 600x450
+            baseWidth = Math.min(maxWidth, baseWidth * fitScale); // 限制宽度 / Limit width
+            baseHeight = Math.min(maxHeight, baseHeight * fitScale); // 限制高度 / Limit height
 
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
