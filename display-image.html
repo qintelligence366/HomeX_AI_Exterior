@@ -5,6 +5,10 @@
 </head>
 <body>
     <canvas id="canvas" style="border: 1px solid black;"></canvas> <!-- 设置边框以可视化 Canvas 区域 / Set border to visualize Canvas area -->
+    <div id="buttons" style="display: none;">
+        <button id="confirmButton">确定 / Confirm</button>
+        <button id="resetButton">重选 / Reset</button>
+    </div>
     <script>
         const canvas = document.getElementById("canvas"); // 获取 Canvas 元素 / Get Canvas element
         const ctx = canvas.getContext("2d"); // 获取 2D 绘图上下文 / Get 2D drawing context
@@ -15,6 +19,10 @@
         let originX = 0; // 原始 x 偏移 / Original x offset
         let originY = 0; // 原始 y 偏移 / Original y offset
         let baseWidth, baseHeight; // 基础尺寸 / Base dimensions
+        let regions = []; // 存储多个框选区域 / Array to store multiple selected regions
+        const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
+        const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
+        const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
 
         // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
@@ -55,7 +63,7 @@
 
             // 绘制红点 / Draw red points
             const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
-            const dotRadius = 0.5 * pixelRatio; // 根据像素比调整红点大小 / Adjust dot radius based on pixel ratio
+            const dotRadius = 2 * pixelRatio; // 调整红点大小为 2 像素，乘以像素比 / Adjust dot radius to 2 pixels, multiplied by pixel ratio
             points.forEach(point => {
                 ctx.beginPath();
                 ctx.arc(point.x / scale - originX, point.y / scale - originY, dotRadius, 0, 2 * Math.PI); // 红点半径 / Red dot radius
@@ -63,7 +71,19 @@
                 ctx.fill();
             });
 
-            // 连接点形成多边形 / Connect points to form polygon
+            // 绘制所有已确认的框选区域 / Draw all confirmed regions
+            regions.forEach(region => {
+                ctx.beginPath();
+                ctx.moveTo((region[0].x - originX) / scale, (region[0].y - originY) / scale);
+                for (let i = 1; i < region.length; i++) {
+                    ctx.lineTo((region[i].x - originX) / scale, (region[i].y - originY) / scale);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                ctx.stroke();
+            });
+
+            // 绘制当前正在框选的多边形 / Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
                 ctx.moveTo((points[0].x - originX) / scale, (points[0].y - originY) / scale); // 从第一个点开始 / Start from the first point
@@ -73,7 +93,7 @@
                 // 如果多边形已闭合，保持闭合状态 / If polygon is closed, maintain closed state
                 if (isClosed) {
                     ctx.closePath();
-                    ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                    ctx.strokeStyle = "lightblue";
                     ctx.stroke();
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
@@ -84,7 +104,7 @@
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
                         isClosed = true; // 标记多边形已闭合 / Mark polygon as closed
-                        window.parent.postMessage({ type: "selectionConfirmed", points: points }, "*"); // 向 Adalo 发送消息 / Send message to Adalo
+                        buttonsDiv.style.display = "block"; // 显示按钮 / Show buttons
                     }
                 }
             }
@@ -113,6 +133,26 @@
         // 支持点击和触摸事件 / Support click and touch events
         canvas.addEventListener("click", handleInteraction);
         canvas.addEventListener("touchstart", handleInteraction);
+
+        // 确定按钮点击事件 / Confirm button click event
+        confirmButton.addEventListener("click", () => {
+            if (isClosed) {
+                regions.push([...points]); // 保存当前框选区域 / Save current region
+                points = []; // 清空当前点，准备下一次框选 / Clear current points for next selection
+                isClosed = false; // 重置闭合状态 / Reset closed state
+                buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
+                draw(); // 重新绘制 / Redraw
+                console.log("Regions confirmed:", regions); // 调试：打印所有框选区域 / Debug: Log all regions
+            }
+        });
+
+        // 重选按钮点击事件 / Reset button click event
+        resetButton.addEventListener("click", () => {
+            points = []; // 清空当前点 / Clear current points
+            isClosed = false; // 重置闭合状态 / Reset closed state
+            buttonsDiv.style.display = "none"; // 隐藏按钮 / Hide buttons
+            draw(); // 重新绘制 / Redraw
+        });
 
         // 初始化 Hammer.js 实现缩放 / Initialize Hammer.js for pinch-to-zoom
         const hammer = new Hammer(canvas);
