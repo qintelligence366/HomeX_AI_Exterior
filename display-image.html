@@ -122,8 +122,8 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
-            const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
+            const maxWidth = 600; // 设置基础分辨率为 600px，与 canvasContainer 一致 / Set base resolution to 600px, matches canvasContainer
+            const maxHeight = 450; // 设置基础分辨率为 450px，与 canvasContainer 一致 / Set base resolution to 450px, matches canvasContainer
             const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
             const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
@@ -136,9 +136,9 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // 适配画布尺寸，保持图片完整显示 / Fit image to canvas while maintaining aspect ratio
-            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 使用屏幕宽度的90%或最大宽度 / Use 90% of screen width or maxWidth
-            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // 使用屏幕高度的60%或最大高度 / Use 60% of screen height or maxHeight
+            // 适配画布尺寸，确保图片填满 canvasContainer / Fit image to fill canvasContainer
+            const canvasWidth = maxWidth; // 直接使用 canvasContainer 宽度 / Use canvasContainer width directly
+            const canvasHeight = maxHeight; // 直接使用 canvasContainer 高度 / Use canvasContainer height directly
             const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
             baseWidth = canvasWidth;
             baseHeight = baseHeight * fitScale;
@@ -188,7 +188,7 @@
             ctx.save(); // 保存当前状态 / Save current state
             ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
             ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片 / Draw image
+            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // 绘制图片 / Draw image
             ctx.restore(); // 恢复状态 / Restore state
 
             // 使用固定大小绘制红点 / Draw red points with fixed size
