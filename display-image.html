@@ -32,6 +32,11 @@
             console.log("Canvas initialized:", canvas.width, canvas.height);
         };
 
+        // 计算两点之间的距离
+        function getDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+        }
+
         // 处理点击事件（PC 和移动设备）
         function handleInteraction(e) {
             e.preventDefault();
@@ -61,11 +66,16 @@
                 for (let i = 1; i < points.length; i++) {
                     ctx.lineTo(points[i].x, points[i].y);
                 }
-                // 如果点数大于等于 3，闭合多边形
-                if (points.length >= 3) {
-                    ctx.closePath();
-                    ctx.strokeStyle = "lightblue"; // 框选线颜色
-                    ctx.stroke();
+                // 至少 4 个点，且最后一个点与第一个点接近时闭合
+                if (points.length >= 4) {
+                    const firstPoint = points[0];
+                    const lastPoint = points[points.length - 1];
+                    const distanceThreshold = 20; // 距离阈值，单位像素，可调整
+                    if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
+                        ctx.closePath();
+                        ctx.strokeStyle = "lightblue"; // 框选线颜色
+                        ctx.stroke();
+                    }
                 }
             }
 
