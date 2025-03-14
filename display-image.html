@@ -53,10 +53,13 @@
                 bottom: 10px; /* 底部间距 / Bottom margin */
                 left: 50%; /* 居中 / Center */
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
-                width: 80%; /* 宽度占屏幕80% / Width 80% of screen */
+                width: 90%; /* 调整宽度以适配按钮 / Adjust width to fit buttons */
+                gap: 5px; /* 缩小间距以适应小屏幕 / Reduce gap for smaller screens */
             }
             #confirmButton, #resetButton {
-                width: 45%; /* 每个按钮占45% / Each button takes 45% */
+                padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
+                font-size: 12px; /* 缩小字体大小 / Reduce font size */
+                width: auto; /* 自动宽度 / Auto width */
                 box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
             #zoomInButton, #zoomOutButton {
@@ -214,13 +217,13 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 20;
+                    const distanceThreshold = 90; // 调整距离阈值以适应更大画布 / Adjust distance threshold to fit larger canvas
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
                         isClosed = true;
-                        buttonsDiv.style.display = "block";
+                        // buttonsDiv.style.display = "block"; // 移除动态样式修改 / Remove dynamic style change
                     }
                 }
             }
@@ -298,7 +301,6 @@
                 regions.push([...points]);
                 points = [];
                 isClosed = false;
-                buttonsDiv.style.display = "none";
                 draw();
                 console.log("Regions confirmed:", regions);
             }
@@ -308,7 +310,6 @@
         resetButton.addEventListener("click", () => {
             points = [];
             isClosed = false;
-            buttonsDiv.style.display = "none";
             draw();
         });
 
