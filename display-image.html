@@ -17,14 +17,9 @@
         #buttons {
             margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
             text-align: center; /* 居中对齐 / Center align */
-            display: none; /* 默认隐藏 / Default hidden */
-        }
-        #zoomButtons {
-            position: absolute; /* 将按钮定位在画布上 / Position buttons on top of canvas */
-            top: 10px;
-            right: 10px;
-            display: flex;
-            flex-direction: column;
+            display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
+            justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
+            gap: 10px; /* 按钮间距 / Button spacing */
         }
         #confirmButton, #resetButton {
             padding: 8px 16px; /* 按钮内边距 / Button padding */
@@ -38,7 +33,6 @@
             border-radius: 50%; /* 设为圆形 / Make circular */
             border: 1px solid #000; /* 边框增加可见性 / Border for visibility */
             background: #fff; /* 白色背景 / White background */
-            margin: 5px 0; /* 按钮间距 / Button spacing */
             font-size: 20px; /* 符号大小 / Symbol size */
             display: flex; /* 使用 flex 布局居中 / Use flex to center content */
             justify-content: center; /* 水平居中 / Center horizontally */
@@ -65,10 +59,6 @@
                 width: 45%; /* 每个按钮占45% / Each button takes 45% */
                 box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
-            #zoomButtons {
-                top: 5px;
-                right: 5px;
-            }
             #zoomInButton, #zoomOutButton {
                 width: 30px; /* 手机端更小尺寸 / Smaller size for mobile */
                 height: 30px;
@@ -80,14 +70,12 @@
 <body>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
-        <div id="zoomButtons">
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
-        </div>
     </div>
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
+        <button id="zoomInButton">+</button>
+        <button id="zoomOutButton">-</button>
     </div>
     <script>
         const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
@@ -122,8 +110,8 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // 设置基础分辨率为 600px，与 canvasContainer 一致 / Set base resolution to 600px, matches canvasContainer
-            const maxHeight = 450; // 设置基础分辨率为 450px，与 canvasContainer 一致 / Set base resolution to 450px, matches canvasContainer
+            const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
+            const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
             const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
             const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
@@ -136,10 +124,13 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // 适配画布尺寸，确保图片填满但不超过 canvasContainer / Fit image to fill canvasContainer without exceeding
-            const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight); // 确保不超过 600x450 / Ensure within 600x450
-            baseWidth = Math.min(maxWidth, baseWidth * fitScale); // 限制宽度 / Limit width
-            baseHeight = Math.min(maxHeight, baseHeight * fitScale); // 限制高度 / Limit height
+            // 适配画布尺寸，保持图片完整显示 / Fit image to canvas while maintaining aspect ratio
+            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 使用屏幕宽度的90%或最大宽度 / Use 90% of screen width or maxWidth
+            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // 使用屏幕高度的60%或最大高度 / Use 60% of screen height or maxHeight
+            const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
+            baseWidth = canvasWidth;
+            baseHeight = baseHeight * fitScale;
+            imageScale = fitScale;
 
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
@@ -185,7 +176,7 @@
             ctx.save(); // 保存当前状态 / Save current state
             ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
             ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth / imageScale, baseHeight / imageScale); // 绘制图片 / Draw image
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片 / Draw image
             ctx.restore(); // 恢复状态 / Restore state
 
             // 使用固定大小绘制红点 / Draw red points with fixed size
