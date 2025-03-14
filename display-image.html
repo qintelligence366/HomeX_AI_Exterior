@@ -318,18 +318,20 @@
 
         // Zoom in button click event
         zoomInButton.addEventListener("click", () => {
-            imageScale *= 1.2; // Increase scale by 20%
-            imageScale = Math.min(imageScale, 3); // Limit max zoom to 3x
-            updateZoomButtons();
-            draw();
+            if (imageScale < 3) {
+                imageScale *= 1.2; // Increase scale by 20%
+                updateZoomButtons();
+                draw();
+            }
         });
 
         // Zoom out button click event
         zoomOutButton.addEventListener("click", () => {
-            imageScale /= 1.2; // Decrease scale by 20%
-            imageScale = Math.max(imageScale, 0.5); // Limit min zoom to 0.5x
-            updateZoomButtons();
-            draw();
+            if (imageScale > 0.5) {
+                imageScale /= 1.2; // Decrease scale by 20%
+                updateZoomButtons();
+                draw();
+            }
         });
 
         console.log("Image URL:", imageUrl);
