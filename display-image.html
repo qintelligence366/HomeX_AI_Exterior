@@ -144,7 +144,10 @@
         const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
         const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
         let isDraggingIntent = false; // 标记是否意图拖动
-        let touchTimeout; // 计时器用于区分点击和拖动
+        let startTouchX, startTouchY; // 记录触摸起始位置
+        let touchStartTime; // 记录触摸开始时间
+        const dragThreshold = 5; // 拖动距离阈值（像素）
+        const clickTimeThreshold = 300; // 点击时间阈值（毫秒）
 
         // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
@@ -263,9 +266,13 @@
             // 绘制当前正在框选的多边形 / Draw the current polygon being selected
             if (points.length > 1) {
                 ctx.beginPath();
-                ctx.moveTo(points[0].x - originX, points[0].y - originY);
+                const startX = (points[0].x * imageScale + originX) / pixelRatio;
+                const startY = (points[0].y * imageScale + originY) / pixelRatio;
+                ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x - originX, points[i].y - originY);
+                    const adjustedX = (points[i].x * imageScale + originX) / pixelRatio;
+                    const adjustedY = (points[i].y * imageScale + originY) / pixelRatio;
+                    ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
                     ctx.closePath();
@@ -280,7 +287,6 @@
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
                         isClosed = true;
-                        // buttonsDiv.style.display = "block"; // 移除动态样式修改 / Remove dynamic style change
                     }
                 }
             }
@@ -354,26 +360,45 @@
             const x = (rawX * pixelRatio - originX) / imageScale;
             const y = (rawY * pixelRatio - originY) / imageScale;
 
+            startTouchX = rawX; // 记录触摸起始位置
+            startTouchY = rawY;
+            touchStartTime = Date.now(); // 记录触摸开始时间
             isDraggingIntent = false; // 重置拖动意图
-            touchTimeout = setTimeout(() => {
-                if (!isDraggingIntent && !isClosed) {
-                    points.push({ x: x, y: y });
-                    draw();
-                    console.log("Touch clicked at (adjusted):", x, y);
-                }
-            }, 200); // 200ms 阈值区分点击和拖动
 
             startDragging(e); // 准备拖动
         });
 
         canvas.addEventListener("touchmove", (e) => {
-            isDraggingIntent = true; // 标记为拖动意图
-            clearTimeout(touchTimeout); // 取消点击计时器
-            drag(e);
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const currentX = e.touches[0].clientX - rect.left;
+            const currentY = e.touches[0].clientY - rect.top;
+
+            // 计算移动距离
+            const distance = Math.sqrt(
+                Math.pow(currentX - startTouchX, 2) + Math.pow(currentY - startTouchY, 2)
+            );
+            if (distance > dragThreshold) {
+                isDraggingIntent = true; // 超过阈值标记为拖动
+                drag(e);
+            }
         });
 
         canvas.addEventListener("touchend", (e) => {
-            clearTimeout(touchTimeout); // 清除计时器
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const rawX = startTouchX; // 使用起始位置
+            const rawY = startTouchY;
+            const x = (rawX * pixelRatio - originX) / imageScale;
+            const y = (rawY * pixelRatio - originY) / imageScale;
+
+            const touchDuration = Date.now() - touchStartTime; // 计算触摸时长
+            if (!isDraggingIntent && touchDuration < clickTimeThreshold && !isClosed) {
+                points.push({ x: x, y: y });
+                draw();
+                console.log("Touch clicked at (adjusted):", x, y);
+            }
+
             stopDragging();
         });
 
