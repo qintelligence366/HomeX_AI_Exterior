@@ -50,6 +50,7 @@
         let initialOriginX = 0;
         let initialOriginY = 0;
         let isMoving = false;
+        let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
         const undoButton = document.getElementById("undoButton");
@@ -189,6 +190,7 @@
             startY = rawY;
             initialOriginX = originX;
             initialOriginY = originY;
+            startTime = Date.now();
             isDragging = true;
             isMoving = true;
         }
@@ -224,10 +226,13 @@
 
             if (duration < clickTimeThreshold && !isClosed) {
                 points.push({ x, y });
+                isMoving = false;
+                draw();
+            } else {
+                isDragging = false;
+                isMoving = false;
+                draw();
             }
-            isDragging = false;
-            isMoving = false;
-            draw();
         }
 
         canvas.addEventListener("mousedown", handleStart);
@@ -271,7 +276,7 @@
                 setTimeout(() => {
                     isMoving = false;
                     draw();
-                }, 100); // 模拟静止
+                }, 100);
             }
         });
 
@@ -284,7 +289,7 @@
                 setTimeout(() => {
                     isMoving = false;
                     draw();
-                }, 100); // 模拟静止
+                }, 100);
             }
         });
     </script>
