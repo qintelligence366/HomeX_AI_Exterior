@@ -123,55 +123,52 @@
         </div>
     </div>
     <script>
-        const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
-        const canvas = document.getElementById("canvas"); // 获取画布元素 / Get Canvas element
-        const ctx = canvas.getContext("2d"); // 获取 2D 绘图上下文 / Get 2D drawing context
-        let image = new Image(); // 创建图片对象 / Create image object
-        let points = []; // 存储点击点坐标的数组 / Array to store click point coordinates
-        let isClosed = false; // 标记多边形是否闭合 / Flag to indicate if polygon is closed
-        let imageScale = 1; // 仅用于图片的缩放比例 / Zoom scale for image only
-        let originX = 0; // 原始 x 偏移 / Original x offset
-        let originY = 0; // 原始 y 偏移 / Original y offset
-        let baseWidth, baseHeight; // 基础尺寸 / Base dimensions
-        let regions = []; // 存储多个框选区域 / Array to store multiple selected regions
-        let isDragging = false; // 拖动标志 / Flag for dragging
-        let startX = 0; /* 拖动起始 x 位置 / Start x position for dragging */
-        let startY = 0; /* 拖动起始 y 位置 / Start y position for dragging */
-        const confirmButton = document.getElementById("confirmButton"); // 确定按钮 / Confirm button
-        const resetButton = document.getElementById("resetButton"); // 重选按钮 / Reset button
-        const zoomInButton = document.getElementById("zoomInButton"); // 放大按钮 / Zoom in button
-        const zoomOutButton = document.getElementById("zoomOutButton"); // 缩小按钮 / Zoom out button
-        const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
-        const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
-        let isDraggingIntent = false; // 标记是否意图拖动
-        let startTouchX, startTouchY; // 记录触摸起始位置
-        let touchStartTime; // 记录触摸开始时间
+        const canvasContainer = document.getElementById("canvasContainer");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let image = new Image();
+        let points = [];
+        let isClosed = false;
+        let imageScale = 1;
+        let originX = 0;
+        let originY = 0;
+        let baseWidth, baseHeight;
+        let regions = [];
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let startTime = 0;
+        let isDraggingIntent = false;
+        const confirmButton = document.getElementById("confirmButton");
+        const resetButton = document.getElementById("resetButton");
+        const zoomInButton = document.getElementById("zoomInButton");
+        const zoomOutButton = document.getElementById("zoomOutButton");
+        const buttonsDiv = document.getElementById("buttons");
+        const pixelRatio = window.devicePixelRatio || 1;
         const dragThreshold = 5; // 拖动距离阈值（像素）
         const clickTimeThreshold = 300; // 点击时间阈值（毫秒）
 
-        // 动态接收 URL 参数 / Dynamically receive URL parameters
+        // 动态接收 URL 参数
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
             if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20"; // 如果缺少参数，添加 imgix 优化参数 / Add imgix optimization parameters if missing
+                imageUrl += "?auto=format&q=20";
             }
         }
         image.src = imageUrl;
 
         image.onload = () => {
-            let maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
-            let maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
-            const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
-            const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
+            let maxWidth = 600;
+            let maxHeight = 450;
+            const imageRatio = image.width / image.height;
+            const canvasRatio = maxWidth / maxHeight;
 
-            // 手机端动态调整 maxWidth 和 maxHeight
             if (window.innerWidth <= 768) {
-                maxWidth = window.innerWidth * 0.9; // 90vw
-                maxHeight = maxWidth * 0.75; // 4:3 比例
+                maxWidth = window.innerWidth * 0.9;
+                maxHeight = maxWidth * 0.75;
             }
 
-            // 根据宽高比调整尺寸以保持比例，限制在 maxWidth 和 maxHeight 内
             if (imageRatio > canvasRatio) {
                 baseWidth = maxWidth;
                 baseHeight = maxWidth / imageRatio;
@@ -180,40 +177,34 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
-            // 确保 baseWidth 和 baseHeight 不超出 maxWidth 和 maxHeight
             const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
             baseWidth *= fitScale;
             baseHeight *= fitScale;
 
-            imageScale = 1; // 初始缩放比例为 1
+            imageScale = 1;
 
-            // 动态调整 canvasContainer 尺寸以匹配图片
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
+            canvas.width = baseWidth * pixelRatio;
+            canvas.height = baseHeight * pixelRatio;
+            canvas.style.width = `${baseWidth}px`;
+            canvas.style.height = `${baseHeight}px`;
+            ctx.scale(pixelRatio, pixelRatio);
 
-            // 动态调整 canvas 尺寸以适应 canvasContainer
-            canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
-            canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
-            canvas.style.width = `${baseWidth}px`; // 设置 CSS 宽度为逻辑像素 / Set CSS width to logical pixels
-            canvas.style.height = `${baseHeight}px`; // 设置 CSS 高度为逻辑像素 / Set CSS height to logical pixels
-            ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
-
-            updateZoomButtons(); // 初始化缩放按钮状态 / Initial zoom button state
-            draw(); // 初始绘制 / Initial draw
+            updateZoomButtons();
+            draw();
         };
 
         image.onerror = () => {
             console.error("图片加载失败 / Image failed to load:", imageUrl);
-            buttonsDiv.style.display = "block"; // 即使图片加载失败，也显示按钮 / Show buttons even if image fails to load
-            draw(); // 强制绘制 / Force draw
+            buttonsDiv.style.display = "block";
+            draw();
         };
 
-        // 计算两点之间的距离 / Calculate distance between two points
         function getDistance(p1, p2) {
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        // 更新缩放按钮状态 / Update zoom button states
         function updateZoomButtons() {
             if (imageScale >= 3) {
                 zoomInButton.classList.add("disabled");
@@ -231,17 +222,15 @@
             }
         }
 
-        // 绘制图片和多边形 / Draw image and polygon
         function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 使用逻辑像素清除画布
-            ctx.save(); // 保存当前状态
-            ctx.scale(imageScale, imageScale); // 对图片应用缩放
-            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片
-            ctx.restore(); // 恢复状态
+            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+            ctx.save();
+            ctx.scale(imageScale, imageScale);
+            ctx.translate(originX / pixelRatio, originY / pixelRatio);
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
+            ctx.restore();
 
-            // 使用固定大小绘制红点
-            const dotRadius = 3; // 固定红点大小为 3 像素
+            const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
                 const adjustedX = point.x * imageScale + originX;
@@ -251,7 +240,6 @@
                 ctx.fill();
             });
 
-            // 绘制所有已确认的框选区域
             regions.forEach(region => {
                 ctx.beginPath();
                 const startX = region[0].x * imageScale + originX;
@@ -263,11 +251,10 @@
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "lightblue"; // 框选线颜色
+                ctx.strokeStyle = "lightblue";
                 ctx.stroke();
             });
 
-            // 绘制当前正在框选的多边形
             if (points.length > 1) {
                 ctx.beginPath();
                 const startX = points[0].x * imageScale + originX;
@@ -285,9 +272,9 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 90; // 调整距离阈值以适应更大画布
+                    const distanceThreshold = 1; // 改为 1，更严格的闭合条件
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
-                        ctx.closePath(); // 仅视觉提示闭合，不设置 isClosed
+                        ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
                     }
@@ -295,120 +282,81 @@
             }
         }
 
-        // 处理鼠标点击事件 / Handle mouse click events
-        function handleInteraction(e) {
+        function getEventPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            const clientY = e.type.includes("touch") ? e.touches[0].clientY : e.clientY;
+            const rawX = clientX - rect.left;
+            const rawY = clientY - rect.top;
+            return { rawX, rawY };
+        }
+
+        function handleStart(e) {
             if (isClosed) return;
 
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const rawX = e.clientX - rect.left; // 仅用于鼠标点击
-            const rawY = e.clientY - rect.top;
-
-            // 将点击坐标转换为图片的原始坐标系
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
-
-            points.push({ x: x, y: y });
-            draw();
-            console.log("Mouse clicked at (adjusted):", x, y);
-        }
-
-        // 处理拖动以平移 / Handle dragging for panning
-        function startDragging(e) {
-            if (isClosed) return;
-
+            const { rawX, rawY } = getEventPosition(e);
+            startX = rawX - (originX / imageScale);
+            startY = rawY - (originY / imageScale);
+            startTime = Date.now();
+            isDraggingIntent = false;
             isDragging = true;
-            const rect = canvas.getBoundingClientRect();
-            startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - (originX / imageScale);
-            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - (originY / imageScale);
         }
 
-        function stopDragging() {
-            isDragging = false;
-        }
-
-        function drag(e) {
+        function handleMove(e) {
             if (!isDragging) return;
 
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
-            originX = (x - startX) * imageScale;
-            originY = (y - startY) * imageScale;
+            const { rawX, rawY } = getEventPosition(e);
+            const distance = Math.sqrt(
+                Math.pow(rawX - (startX + originX / imageScale), 2) +
+                Math.pow(rawY - (startY + originY / imageScale), 2)
+            );
 
-            // 限制拖动范围，防止图片完全移出视野 / Limit dragging to prevent image from moving completely out of view
-            const scaledWidth = baseWidth * imageScale;
-            const scaledHeight = baseHeight * imageScale;
-            const maxX = Math.max(0, scaledWidth - baseWidth);
-            const maxY = Math.max(0, scaledHeight - baseHeight);
-            originX = Math.min(0, Math.max(originX, -maxX));
-            originY = Math.min(0, Math.max(originY, -maxY));
+            if (distance > dragThreshold) {
+                isDraggingIntent = true;
+                originX = (rawX - startX) * imageScale;
+                originY = (rawY - startY) * imageScale;
 
-            draw();
+                const scaledWidth = baseWidth * imageScale;
+                const scaledHeight = baseHeight * imageScale;
+                const maxX = Math.max(0, scaledWidth - baseWidth);
+                const maxY = Math.max(0, scaledHeight - baseHeight);
+                originX = Math.min(0, Math.max(originX, -maxX));
+                originY = Math.min(0, Math.max(originY, -maxY));
+
+                draw();
+            }
         }
 
-        // 鼠标事件用于拖动 / Mouse events for dragging
-        canvas.addEventListener("mousedown", startDragging);
-        canvas.addEventListener("mousemove", drag);
-        canvas.addEventListener("mouseup", stopDragging);
-        canvas.addEventListener("mouseleave", stopDragging);
+        function handleEnd(e) {
+            if (!isDragging) return;
 
-        // 触摸事件用于拖动和点击 / Touch events for dragging and clicking
-        canvas.addEventListener("touchstart", (e) => {
             e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const rawX = e.touches[0].clientX - rect.left;
-            const rawY = e.touches[0].clientY - rect.top;
+            const { rawX, rawY } = getEventPosition(e);
             const x = (rawX - originX) / imageScale;
             const y = (rawY - originY) / imageScale;
+            const duration = Date.now() - startTime;
 
-            startTouchX = rawX; // 记录触摸起始位置
-            startTouchY = rawY;
-            touchStartTime = Date.now(); // 记录触摸开始时间
-            isDraggingIntent = false; // 重置拖动意图
-
-            startDragging(e); // 准备拖动
-        });
-
-        canvas.addEventListener("touchmove", (e) => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const currentX = e.touches[0].clientX - rect.left;
-            const currentY = e.touches[0].clientY - rect.top;
-
-            // 计算移动距离
-            const distance = Math.sqrt(
-                Math.pow(currentX - startTouchX, 2) + Math.pow(currentY - startTouchY, 2)
-            );
-            if (distance > dragThreshold) {
-                isDraggingIntent = true; // 超过阈值标记为拖动
-                drag(e);
-            }
-        });
-
-        canvas.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            const rect = canvas.getBoundingClientRect();
-            const rawX = startTouchX; // 使用起始位置
-            const rawY = startTouchY;
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
-
-            const touchDuration = Date.now() - touchStartTime; // 计算触摸时长
-            if (!isDraggingIntent && touchDuration < clickTimeThreshold && !isClosed) {
-                points.push({ x: x, y: y });
+            if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
+                points.push({ x, y });
                 draw();
-                console.log("Touch clicked at (adjusted):", x, y);
+                console.log("Clicked at (adjusted):", x, y);
             }
 
-            stopDragging();
-        });
+            isDragging = false;
+        }
 
-        // 点击事件用于选择点（仅鼠标） / Click event for selecting points (mouse only)
-        canvas.addEventListener("click", handleInteraction);
+        // 统一的事件监听器
+        canvas.addEventListener("mousedown", handleStart);
+        canvas.addEventListener("mousemove", handleMove);
+        canvas.addEventListener("mouseup", handleEnd);
+        canvas.addEventListener("mouseleave", handleEnd);
 
-        // 确定按钮点击事件 / Confirm button click event
+        canvas.addEventListener("touchstart", handleStart);
+        canvas.addEventListener("touchmove", handleMove);
+        canvas.addEventListener("touchend", handleEnd);
+
         confirmButton.addEventListener("click", () => {
             if (isClosed) {
                 regions.push([...points]);
@@ -419,28 +367,25 @@
             }
         });
 
-        // 重选按钮点击事件 / Reset button click event
         resetButton.addEventListener("click", () => {
             points = [];
             isClosed = false;
             draw();
         });
 
-        // 放大按钮点击事件 / Zoom in button click event
         zoomInButton.addEventListener("click", () => {
             if (imageScale < 3) {
-                imageScale *= 1.2; // 放大 20% / Increase scale by 20%
-                console.log("Zoom In:", imageScale); // 调试缩放值 / Debug zoom scale
+                imageScale *= 1.2;
+                console.log("Zoom In:", imageScale);
                 updateZoomButtons();
                 draw();
             }
         });
 
-        // 缩小按钮点击事件 / Zoom out button click event
         zoomOutButton.addEventListener("click", () => {
             if (imageScale > 0.5) {
-                imageScale /= 1.2; // 缩小 20% / Decrease scale by 20%
-                console.log("Zoom Out:", imageScale); // 调试缩放值 / Debug zoom scale
+                imageScale /= 1.2;
+                console.log("Zoom Out:", imageScale);
                 updateZoomButtons();
                 draw();
             }
