@@ -20,17 +20,9 @@
             display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
             justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
             align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-            gap: 15px; /* 增加按钮间距以避免误操作 / Increase button spacing to avoid misoperation */
+            gap: 20px; /* 增加按钮间距 / Increase button spacing */
             width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
             min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-        }
-        #zoomButtons {
-            position: absolute; /* 绝对定位到右下角 / Absolute positioning to bottom-right */
-            bottom: 10px; /* 距离底部 10px / 10px from bottom */
-            right: 10px; /* 距离右边 10px / 10px from right */
-            display: flex; /* 水平排列缩放按钮 / Horizontal layout for zoom buttons */
-            gap: 10px; /* 缩放按钮间距 / Spacing between zoom buttons */
-            z-index: 10; /* 确保按钮在图片之上 / Ensure buttons are above the image */
         }
         #confirmButton, #resetButton {
             padding: 8px 16px; /* 按钮内边距 / Button padding */
@@ -68,13 +60,8 @@
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
                 width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
                 min-width: 90vw; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-                gap: 10px; /* 手机端增加间距以避免误操作 / Increase gap on mobile to avoid misoperation */
+                gap: 15px; /* 手机端增加间距 / Increase gap on mobile */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-            }
-            #zoomButtons {
-                bottom: 50px; /* 调整位置以避免与 #buttons 重叠 / Adjust position to avoid overlap with #buttons */
-                right: 10px;
-                gap: 8px; /* 手机端缩小间距 / Reduce gap on mobile */
             }
             #confirmButton, #resetButton {
                 padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
@@ -95,14 +82,12 @@
 <body>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
-        <div id="zoomButtons">
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
-        </div>
     </div>
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
+        <button id="zoomInButton">+</button>
+        <button id="zoomOutButton">-</button>
     </div>
     <script>
         const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
