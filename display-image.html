@@ -47,6 +47,8 @@
         let isDragging = false;
         let startX = 0;
         let startY = 0;
+        let initialOriginX = 0;
+        let initialOriginY = 0;
         let startTime = 0;
         let isDraggingIntent = false;
         const confirmButton = document.getElementById("confirmButton");
@@ -207,6 +209,8 @@
             const { rawX, rawY } = getEventPosition(e);
             startX = rawX;
             startY = rawY;
+            initialOriginX = originX;
+            initialOriginY = originY;
             startTime = Date.now();
             isDraggingIntent = false;
             isDragging = true;
@@ -223,8 +227,8 @@
 
             if (distance > dragThreshold) {
                 isDraggingIntent = true;
-                originX = (rawX - startX) * imageScale;
-                originY = (rawY - startY) * imageScale;
+                originX = initialOriginX + (rawX - startX);
+                originY = initialOriginY + (rawY - startY);
 
                 const scaledWidth = baseWidth * imageScale;
                 const scaledHeight = baseHeight * imageScale;
