@@ -138,25 +138,11 @@
         image.onload = () => {
             const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
             const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
-            const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
-            const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
-            // 根据宽高比调整尺寸以保持比例 / Adjust dimensions to maintain aspect ratio
-            if (imageRatio > canvasRatio) {
-                baseWidth = maxWidth;
-                baseHeight = maxWidth / imageRatio;
-            } else {
-                baseHeight = maxHeight;
-                baseWidth = maxHeight * imageRatio;
-            }
-
-            // 适配画布尺寸，保持图片完整显示 / Fit image to canvas while maintaining aspect ratio
-            const canvasWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 使用屏幕宽度的90%或最大宽度 / Use 90% of screen width or maxWidth
-            const canvasHeight = Math.min(window.innerHeight * 0.6, maxHeight); // 使用屏幕高度的60%或最大高度 / Use 60% of screen height or maxHeight
-            const fitScale = Math.min(canvasWidth / baseWidth, canvasHeight / baseHeight);
-            baseWidth = canvasWidth;
-            baseHeight = baseHeight * fitScale;
-            imageScale = fitScale;
+            // 强制将图片尺寸设置为 canvasContainer 的尺寸（4:3 比例）
+            baseWidth = maxWidth;
+            baseHeight = maxHeight;
+            imageScale = 1; // 初始缩放比例为 1
 
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
