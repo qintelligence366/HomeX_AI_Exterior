@@ -14,6 +14,8 @@
             position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
             width: 600px; /* 固定画布宽度 / Fixed canvas width */
             height: 450px; /* 固定画布高度 / Fixed canvas height */
+            max-width: 600px; /* 限制最大宽度 / Limit max width */
+            max-height: 450px; /* 限制最大高度 / Limit max height */
             overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
             border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
         }
@@ -21,6 +23,8 @@
             position: absolute; /* 允许拖动 / Allow dragging */
             top: 0;
             left: 0;
+            width: 100%; /* 适应容器宽度 / Fit container width */
+            height: 100%; /* 适应容器高度 / Fit container height */
         }
         #buttons {
             margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
@@ -63,6 +67,8 @@
             #canvasContainer {
                 width: 90vw; /* 占视口宽度90% / 90% of viewport width */
                 padding-top: 75%; /* 强制 4:3 比例 / Force 4:3 ratio (450/600 = 0.75) */
+                max-width: 90vw; /* 限制最大宽度 / Limit max width */
+                max-height: calc(90vw * 0.75); /* 限制最大高度为 4:3 比例 / Limit max height to 4:3 ratio */
                 overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
                 border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
             }
@@ -128,8 +134,8 @@
         // 强制初始化 canvas 尺寸 / Force initialize canvas size
         canvas.width = 600 * pixelRatio;
         canvas.height = 450 * pixelRatio;
-        canvas.style.width = "600px";
-        canvas.style.height = "450px";
+        canvas.style.width = "100%"; // 适应容器宽度 / Fit container width
+        canvas.style.height = "100%"; // 适应容器高度 / Fit container height
         ctx.scale(pixelRatio, pixelRatio);
 
         // 动态接收 URL 参数 / Dynamically receive URL parameters
@@ -148,21 +154,28 @@
             const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
             const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
 
-            // 根据宽高比调整尺寸以保持比例 / Adjust dimensions to maintain aspect ratio
+            // 根据宽高比调整尺寸以保持比例，限制在 maxWidth 和 maxHeight 内
             if (imageRatio > canvasRatio) {
                 baseWidth = maxWidth;
                 baseHeight = maxWidth / imageRatio;
+                if (baseHeight > maxHeight) {
+                    baseHeight = maxHeight;
+                    baseWidth = maxHeight * imageRatio;
+                }
             } else {
                 baseHeight = maxHeight;
                 baseWidth = maxHeight * imageRatio;
+                if (baseWidth > maxWidth) {
+                    baseWidth = maxWidth;
+                    baseHeight = maxWidth / imageRatio;
+                }
             }
-
-            // 确保 canvasContainer 尺寸与 canvas 一致 / Ensure canvasContainer size matches canvas
-            canvasContainer.style.width = `${maxWidth}px`;
-            canvasContainer.style.height = `${maxHeight}px`;
 
             imageScale = 1; // 初始缩放比例为 1
 
+            // 确保 canvasContainer 和 canvas 尺寸一致
+            canvasContainer.style.width = `${maxWidth}px`;
+            canvasContainer.style.height = `${maxHeight}px`;
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
             canvas.style.width = `${baseWidth}px`; // 设置 CSS 宽度为逻辑像素 / Set CSS width to logical pixels
