@@ -306,8 +306,8 @@
             const rawY = e.clientY - rect.top;
 
             // 将点击坐标转换为图片的原始坐标系
-            const x = (rawX * pixelRatio - originX) / imageScale;
-            const y = (rawY * pixelRatio - originY) / imageScale;
+            const x = (rawX - originX) / imageScale;
+            const y = (rawY - originY) / imageScale;
 
             points.push({ x: x, y: y });
             draw();
@@ -361,8 +361,8 @@
             const rect = canvas.getBoundingClientRect();
             const rawX = e.touches[0].clientX - rect.left;
             const rawY = e.touches[0].clientY - rect.top;
-            const x = (rawX * pixelRatio - originX) / imageScale;
-            const y = (rawY * pixelRatio - originY) / imageScale;
+            const x = (rawX - originX) / imageScale;
+            const y = (rawY - originY) / imageScale;
 
             startTouchX = rawX; // 记录触摸起始位置
             startTouchY = rawY;
@@ -393,8 +393,8 @@
             const rect = canvas.getBoundingClientRect();
             const rawX = startTouchX; // 使用起始位置
             const rawY = startTouchY;
-            const x = (rawX * pixelRatio - originX) / imageScale;
-            const y = (rawY * pixelRatio - originY) / imageScale;
+            const x = (rawX - originX) / imageScale;
+            const y = (rawY - originY) / imageScale;
 
             const touchDuration = Date.now() - touchStartTime; // 计算触摸时长
             if (!isDraggingIntent && touchDuration < clickTimeThreshold && !isClosed) {
