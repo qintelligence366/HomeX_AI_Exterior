@@ -239,9 +239,8 @@
             const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                // 将点的坐标根据 imageScale 缩放，并应用 originX 和 originY 的偏移
-                const adjustedX = (point.x * imageScale + originX) / pixelRatio;
-                const adjustedY = (point.y * imageScale + originY) / pixelRatio;
+                const adjustedX = point.x * imageScale + originX / pixelRatio;
+                const adjustedY = point.y * imageScale + originY / pixelRatio;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -291,12 +290,16 @@
 
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
+            const rawX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
+            const rawY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
+
+            // 将点击坐标转换为图片的原始坐标系
+            const x = (rawX - originX) / imageScale;
+            const y = (rawY - originY) / imageScale;
 
             points.push({ x: x, y: y });
             draw();
-            console.log("Clicked at:", x, y);
+            console.log("Clicked at (adjusted):", x, y);
         }
 
         // 处理拖动以平移 / Handle dragging for panning
