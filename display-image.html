@@ -49,6 +49,7 @@
         let startY = 0;
         let initialOriginX = 0;
         let initialOriginY = 0;
+        let isMoving = false;
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
         const undoButton = document.getElementById("undoButton");
@@ -115,45 +116,47 @@
             ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
             ctx.restore();
 
-            const dotRadius = 3;
-            points.forEach(point => {
-                ctx.beginPath();
-                const adjustedX = point.x * imageScale + originX;
-                const adjustedY = point.y * imageScale + originY;
-                ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                ctx.fillStyle = "red";
-                ctx.fill();
-            });
+            if (!isMoving) {
+                const dotRadius = 3;
+                points.forEach(point => {
+                    ctx.beginPath();
+                    const adjustedX = point.x * imageScale + originX;
+                    const adjustedY = point.y * imageScale + originY;
+                    ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                    ctx.fillStyle = "red";
+                    ctx.fill();
+                });
 
-            regions.forEach(region => {
-                ctx.beginPath();
-                const startX = region[0].x * imageScale + originX;
-                const startY = region[0].y * imageScale + originY;
-                ctx.moveTo(startX, startY);
-                for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x * imageScale + originX;
-                    const adjustedY = region[i].y * imageScale + originY;
-                    ctx.lineTo(adjustedX, adjustedY);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = "lightblue";
-                ctx.stroke();
-            });
-
-            if (points.length > 1) {
-                ctx.beginPath();
-                const startX = points[0].x * imageScale + originX;
-                const startY = points[0].y * imageScale + originY;
-                ctx.moveTo(startX, startY);
-                for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x * imageScale + originX;
-                    const adjustedY = points[i].y * imageScale + originY;
-                    ctx.lineTo(adjustedX, adjustedY);
-                }
-                if (isClosed) {
+                regions.forEach(region => {
+                    ctx.beginPath();
+                    const startX = region[0].x * imageScale + originX;
+                    const startY = region[0].y * imageScale + originY;
+                    ctx.moveTo(startX, startY);
+                    for (let i = 1; i < region.length; i++) {
+                        const adjustedX = region[i].x * imageScale + originX;
+                        const adjustedY = region[i].y * imageScale + originY;
+                        ctx.lineTo(adjustedX, adjustedY);
+                    }
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
+                });
+
+                if (points.length > 1) {
+                    ctx.beginPath();
+                    const startX = points[0].x * imageScale + originX;
+                    const startY = points[0].y * imageScale + originY;
+                    ctx.moveTo(startX, startY);
+                    for (let i = 1; i < points.length; i++) {
+                        const adjustedX = points[i].x * imageScale + originX;
+                        const adjustedY = points[i].y * imageScale + originY;
+                        ctx.lineTo(adjustedX, adjustedY);
+                    }
+                    if (isClosed) {
+                        ctx.closePath();
+                        ctx.strokeStyle = "lightblue";
+                        ctx.stroke();
+                    }
                 }
             }
         }
@@ -187,6 +190,7 @@
             initialOriginX = originX;
             initialOriginY = originY;
             isDragging = true;
+            isMoving = true;
         }
 
         function handleMove(e) {
@@ -220,10 +224,10 @@
 
             if (duration < clickTimeThreshold && !isClosed) {
                 points.push({ x, y });
-                draw();
-                console.log("Clicked at:", x, y);
             }
             isDragging = false;
+            isMoving = false;
+            draw();
         }
 
         canvas.addEventListener("mousedown", handleStart);
@@ -260,17 +264,27 @@
 
         zoomInButton.addEventListener("click", () => {
             if (imageScale < 3) {
+                isMoving = true;
                 imageScale *= 1.2;
                 updateZoomButtons();
                 draw();
+                setTimeout(() => {
+                    isMoving = false;
+                    draw();
+                }, 100); // 模拟静止
             }
         });
 
         zoomOutButton.addEventListener("click", () => {
             if (imageScale > 0.5) {
+                isMoving = true;
                 imageScale /= 1.2;
                 updateZoomButtons();
                 draw();
+                setTimeout(() => {
+                    isMoving = false;
+                    draw();
+                }, 100); // 模拟静止
             }
         });
     </script>
