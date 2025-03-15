@@ -2,6 +2,11 @@
 <html>
 <head>
     <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 防止滑动条出现 / Prevent scrollbars */
+        }
         * {
             box-sizing: border-box; /* 确保所有元素使用 border-box / Ensure all elements use border-box */
         }
@@ -57,7 +62,7 @@
         @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
             #canvasContainer {
                 width: 90vw; /* 占视口宽度90% / 90% of viewport width */
-                padding-top: 67.5%; /* 强制 4:3 比例 / Force 4:3 ratio (450/600 = 0.75) */
+                padding-top: 75%; /* 强制 4:3 比例 / Force 4:3 ratio (450/600 = 0.75) */
                 overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
                 border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
             }
@@ -151,6 +156,10 @@
                 baseHeight = maxHeight;
                 baseWidth = maxHeight * imageRatio;
             }
+
+            // 确保 canvasContainer 尺寸与 canvas 一致 / Ensure canvasContainer size matches canvas
+            canvasContainer.style.width = `${maxWidth}px`;
+            canvasContainer.style.height = `${maxHeight}px`;
 
             imageScale = 1; // 初始缩放比例为 1
 
