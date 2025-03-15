@@ -239,7 +239,10 @@
             const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                ctx.arc(point.x - originX, point.y - originY, dotRadius, 0, 2 * Math.PI); // 固定红点位置和大小 / Fixed red dot position and size
+                // 将点的坐标根据 imageScale 缩放，并应用 originX 和 originY 的偏移
+                const adjustedX = (point.x * imageScale + originX) / pixelRatio;
+                const adjustedY = (point.y * imageScale + originY) / pixelRatio;
+                ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
