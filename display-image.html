@@ -287,10 +287,9 @@
                     const lastPoint = points[points.length - 1];
                     const distanceThreshold = 90; // 调整距离阈值以适应更大画布
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
-                        ctx.closePath();
+                        ctx.closePath(); // 仅视觉提示闭合，不设置 isClosed
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
-                        isClosed = true;
                     }
                 }
             }
