@@ -20,7 +20,7 @@
             display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
             justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
             align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-            gap: 15px; /* 增加按钮间距以避免误操作 / Increase button spacing to avoid misoperation */
+            gap: 25px; /* 增大按钮间距 / Increase button spacing */
             width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
             min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
         }
@@ -69,7 +69,7 @@
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
                 width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
                 min-width: 90vw; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-                gap: 10px; /* 手机端增加间距以避免误操作 / Increase gap on mobile to avoid misoperation */
+                gap: 20px; /* 手机端增大间距 / Increase gap on mobile */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             }
             #zoomButtons {
@@ -268,7 +268,7 @@
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const y = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.top;
+            const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
 
             points.push({ x: x, y: y });
             draw();
