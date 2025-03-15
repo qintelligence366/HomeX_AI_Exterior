@@ -155,10 +155,16 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            const maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
-            const maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
+            let maxWidth = 600; // 设置基础分辨率为 600px / Set base resolution to 600px
+            let maxHeight = 450; // 设置基础分辨率为 450px / Set base resolution to 450px
             const imageRatio = image.width / image.height; // 计算图片宽高比 / Calculate image aspect ratio
             const canvasRatio = maxWidth / maxHeight; // 计算画布宽高比 / Calculate canvas aspect ratio
+
+            // 手机端动态调整 maxWidth 和 maxHeight
+            if (window.innerWidth <= 768) {
+                maxWidth = window.innerWidth * 0.9; // 90vw
+                maxHeight = maxWidth * 0.75; // 4:3 比例
+            }
 
             // 根据宽高比调整尺寸以保持比例，限制在 maxWidth 和 maxHeight 内
             if (imageRatio > canvasRatio) {
@@ -169,7 +175,16 @@
                 baseWidth = maxHeight * imageRatio;
             }
 
+            // 确保 baseWidth 和 baseHeight 不超出 maxWidth 和 maxHeight
+            const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
+            baseWidth *= fitScale;
+            baseHeight *= fitScale;
+
             imageScale = 1; // 初始缩放比例为 1
+
+            // 动态调整 canvasContainer 尺寸以匹配图片
+            canvasContainer.style.width = `${baseWidth}px`;
+            canvasContainer.style.height = `${baseHeight}px`;
 
             // 动态调整 canvas 尺寸以适应 canvasContainer
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
@@ -177,10 +192,6 @@
             canvas.style.width = `${baseWidth}px`; // 设置 CSS 宽度为逻辑像素 / Set CSS width to logical pixels
             canvas.style.height = `${baseHeight}px`; // 设置 CSS 高度为逻辑像素 / Set CSS height to logical pixels
             ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
-
-            // 动态调整 canvasContainer 尺寸以匹配图片
-            canvasContainer.style.width = `${baseWidth}px`;
-            canvasContainer.style.height = `${baseHeight}px`;
 
             updateZoomButtons(); // 初始化缩放按钮状态 / Initial zoom button state
             draw(); // 初始绘制 / Initial draw
