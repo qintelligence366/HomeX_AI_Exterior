@@ -24,12 +24,20 @@
             width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
             min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
         }
+        #zoomButtons {
+            position: absolute; /* 绝对定位到右下角 / Absolute positioning to bottom-right */
+            bottom: 10px; /* 距离底部 10px / 10px from bottom */
+            right: 10px; /* 距离右边 10px / 10px from right */
+            display: flex; /* 水平排列缩放按钮 / Horizontal layout for zoom buttons */
+            gap: 10px; /* 缩放按钮间距 / Spacing between zoom buttons */
+        }
         #confirmButton, #resetButton {
-            padding: 6px 16px; /* 对称内边距以垂直居中 / Symmetric padding for vertical centering */
+            padding: 8px 16px; /* 按钮内边距 / Button padding */
+            margin: 5px 0; /* 按钮间距 / Button spacing */
             font-size: 14px; /* 字体大小 / Font size */
             height: 40px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
+            line-height: 24px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
             cursor: pointer; /* 鼠标指针样式 / Cursor style */
-            box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in size */
         }
         #zoomInButton, #zoomOutButton {
             width: 40px; /* 圆形按钮大小 / Circular button size */
@@ -42,7 +50,6 @@
             justify-content: center; /* 水平居中 / Center horizontally */
             align-items: center; /* 垂直居中 / Center vertically */
             cursor: pointer; /* 鼠标指针样式 / Cursor style */
-            box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in size */
         }
         #zoomInButton.disabled, #zoomOutButton.disabled {
             background: #ccc; /* 禁用时灰色背景 / Gray background when disabled */
@@ -63,10 +70,16 @@
                 gap: 10px; /* 手机端增加间距以避免误操作 / Increase gap on mobile to avoid misoperation */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             }
+            #zoomButtons {
+                bottom: 50px; /* 调整位置以避免与 #buttons 重叠 / Adjust position to avoid overlap with #buttons */
+                right: 10px;
+                gap: 8px; /* 手机端缩小间距 / Reduce gap on mobile */
+            }
             #confirmButton, #resetButton {
-                padding: 4px 12px; /* 对称内边距以垂直居中 / Symmetric padding for vertical centering */
+                padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
                 font-size: 12px; /* 缩小字体大小 / Reduce font size */
                 height: 30px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
+                line-height: 18px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
                 width: auto; /* 自动宽度 / Auto width */
                 box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
@@ -81,12 +94,14 @@
 <body>
     <div id="canvasContainer">
         <canvas id="canvas"></canvas>
+        <div id="zoomButtons">
+            <button id="zoomInButton">+</button>
+            <button id="zoomOutButton">-</button>
+        </div>
     </div>
     <div id="buttons">
         <button id="confirmButton">Confirm</button>
         <button id="resetButton">Reset</button>
-        <button id="zoomInButton">+</button>
-        <button id="zoomOutButton">-</button>
     </div>
     <script>
         const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
