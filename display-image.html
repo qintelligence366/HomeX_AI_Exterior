@@ -57,7 +57,9 @@
         @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
             #canvasContainer {
                 width: 90vw; /* 占视口宽度90% / 90% of viewport width */
-                height: 60vh; /* 占视口高度60% / 60% of viewport height */
+                padding-top: 75%; /* 强制 4:3 比例 / Force 4:3 ratio */
+                overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
+                border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
             }
             #buttons {
                 position: fixed; /* 固定位置 / Fixed position */
@@ -188,7 +190,8 @@
             ctx.save(); // 保存当前状态 / Save current state
             ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
             ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片 / Draw image
+            // 强制将图片拉伸到 4:3 比例
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片，填满 canvas
             ctx.restore(); // 恢复状态 / Restore state
 
             // 使用固定大小绘制红点 / Draw red points with fixed size
@@ -258,8 +261,8 @@
 
             isDragging = true;
             const rect = canvas.getBoundingClientRect();
-            startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - originX;
-            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - originY;
+            startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - (originX / imageScale);
+            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - (originY / imageScale);
         }
 
         function stopDragging() {
@@ -273,8 +276,8 @@
             const rect = canvas.getBoundingClientRect();
             const x = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
             const y = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
-            originX = x - startX;
-            originY = y - startY;
+            originX = (x - startX) * imageScale;
+            originY = (y - startY) * imageScale;
 
             // 限制拖动范围，防止图片完全移出视野 / Limit dragging to prevent image from moving completely out of view
             const scaledWidth = baseWidth * imageScale;
