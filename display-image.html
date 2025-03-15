@@ -270,16 +270,6 @@
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
-                } else if (points.length >= 4) {
-                    const firstPoint = points[0];
-                    const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 10;
-                    if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
-                        ctx.closePath();
-                        ctx.strokeStyle = "lightblue";
-                        ctx.stroke();
-                        isClosed = true;
-                    }
                 }
             }
         }
@@ -371,7 +361,8 @@
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
-            if (isClosed) {
+            if (points.length >= 3) { // 至少 3 个点即可形成框框
+                isClosed = true;
                 regions.push([...points]);
                 points = [];
                 isClosed = false;
