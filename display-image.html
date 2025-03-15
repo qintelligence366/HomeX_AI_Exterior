@@ -271,12 +271,12 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 10; // 设为 10
+                    const distanceThreshold = 10;
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
-                        isClosed = true; // 自动设置 isClosed
+                        isClosed = true;
                     }
                 }
             }
@@ -307,8 +307,8 @@
 
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
-            startX = rawX - (originX / imageScale);
-            startY = rawY - (originY / imageScale);
+            startX = rawX;
+            startY = rawY;
             startTime = Date.now();
             isDraggingIntent = false;
             isDragging = true;
@@ -320,14 +320,13 @@
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
             const distance = Math.sqrt(
-                Math.pow(rawX - (startX + originX / imageScale), 2) +
-                Math.pow(rawY - (startY + originY / imageScale), 2)
+                Math.pow(rawX - startX, 2) + Math.pow(rawY - startY, 2)
             );
 
             if (distance > dragThreshold) {
                 isDraggingIntent = true;
-                originX = (rawX - startX) * imageScale;
-                originY = (rawY - startY) * imageScale;
+                originX = (rawX - startX) * imageScale + originX;
+                originY = (rawY - startY) * imageScale + originY;
 
                 const scaledWidth = baseWidth * imageScale;
                 const scaledHeight = baseHeight * imageScale;
