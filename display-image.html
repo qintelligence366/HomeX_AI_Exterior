@@ -22,6 +22,7 @@
             align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             gap: 15px; /* 增加按钮间距以避免误操作 / Increase button spacing to avoid misoperation */
             width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
+            min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
         }
         #confirmButton, #resetButton {
             padding: 8px 16px; /* 按钮内边距 / Button padding */
@@ -58,6 +59,7 @@
                 left: 50%; /* 居中 / Center */
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
                 width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
+                min-width: 90vw; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
                 gap: 10px; /* 手机端增加间距以避免误操作 / Increase gap on mobile to avoid misoperation */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             }
@@ -257,7 +259,7 @@
             isDragging = true;
             const rect = canvas.getBoundingClientRect();
             startX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left - originX;
-            startY = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.top - originY;
+            startY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top - originY;
         }
 
         function stopDragging() {
