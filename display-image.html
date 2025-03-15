@@ -25,12 +25,11 @@
             min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
         }
         #confirmButton, #resetButton {
-            padding: 8px 16px; /* 按钮内边距 / Button padding */
-            margin: 5px 0; /* 按钮间距 / Button spacing */
+            padding: 6px 16px; /* 对称内边距以垂直居中 / Symmetric padding for vertical centering */
             font-size: 14px; /* 字体大小 / Font size */
             height: 40px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
-            line-height: 24px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
             cursor: pointer; /* 鼠标指针样式 / Cursor style */
+            box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in size */
         }
         #zoomInButton, #zoomOutButton {
             width: 40px; /* 圆形按钮大小 / Circular button size */
@@ -43,6 +42,7 @@
             justify-content: center; /* 水平居中 / Center horizontally */
             align-items: center; /* 垂直居中 / Center vertically */
             cursor: pointer; /* 鼠标指针样式 / Cursor style */
+            box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in size */
         }
         #zoomInButton.disabled, #zoomOutButton.disabled {
             background: #ccc; /* 禁用时灰色背景 / Gray background when disabled */
@@ -64,10 +64,9 @@
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
             }
             #confirmButton, #resetButton {
-                padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
+                padding: 4px 12px; /* 对称内边距以垂直居中 / Symmetric padding for vertical centering */
                 font-size: 12px; /* 缩小字体大小 / Reduce font size */
                 height: 30px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
-                line-height: 18px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
                 width: auto; /* 自动宽度 / Auto width */
                 box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
             }
