@@ -2,111 +2,21 @@
 <html>
 <head>
     <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        * {
-            box-sizing: border-box;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        #canvasContainer {
-            position: relative;
-            width: 600px;
-            height: 450px;
-            max-width: 600px;
-            max-height: 450px;
-            overflow: hidden;
-            border: 1px solid black;
-        }
-        #canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        #buttons {
-            margin-top: 10px;
-            padding: 0 !important;
-            text-align: center;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            gap: 40px !important;
-            width: auto;
-            min-width: 600px;
-            min-height: 50px;
-        }
-        #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
-            padding: 8px 16px;
-            margin: 0;
-            font-size: 14px;
-            height: 40px;
-            line-height: 24px;
-            cursor: pointer;
-            box-sizing: border-box;
-        }
-        #zoomInButton, #zoomOutButton {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid #000;
-            background: #fff;
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-        #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        html, body { margin: 0; padding: 0; overflow: hidden; }
+        * { box-sizing: border-box; }
+        .container { display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 600px; margin: 0 auto; }
+        #canvasContainer { position: relative; width: 600px; height: 450px; max-width: 600px; max-height: 450px; overflow: hidden; border: 1px solid black; }
+        #canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        #buttons { margin-top: 10px; padding: 0 !important; text-align: center; display: flex !important; justify-content: center !important; align-items: center !important; gap: 40px !important; width: auto; min-width: 600px; min-height: 50px; }
+        #confirmButton, #resetButton, #zoomInButton, #zoomOutButton { padding: 8px 16px; margin: 0; font-size: 14px; height: 40px; line-height: 24px; cursor: pointer; box-sizing: border-box; }
+        #zoomInButton, #zoomOutButton { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #000; background: #fff; font-size: 20px; display: flex; justify-content: center; align-items: center; cursor: pointer; }
+        #zoomInButton.disabled, #zoomOutButton.disabled { background: #ccc; cursor: not-allowed; }
         @media (max-width: 768px) {
-            .container {
-                max-width: 90vw;
-            }
-            #canvasContainer {
-                width: 90vw;
-                padding-top: 75%;
-                max-width: 90vw;
-                max-height: calc(90vw * 0.75);
-                overflow: hidden;
-                border: 1px solid black;
-            }
-            #buttons {
-                position: fixed;
-                bottom: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-                min-width: 90vw;
-                gap: 30px !important;
-                align-items: center;
-                min-height: 40px;
-            }
-            #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
-                padding: 6px 12px;
-                font-size: 12px;
-                height: 30px;
-                line-height: 18px;
-                width: auto;
-                box-sizing: border-box;
-            }
-            #zoomInButton, #zoomOutButton {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
-            }
+            .container { max-width: 90vw; }
+            #canvasContainer { width: 90vw; padding-top: 75%; max-width: 90vw; max-height: calc(90vw * 0.75); overflow: hidden; border: 1px solid black; }
+            #buttons { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); width: auto; min-width: 90vw; gap: 30px !important; align-items: center; min-height: 40px; }
+            #confirmButton, #resetButton, #zoomInButton, #zoomOutButton { padding: 6px 12px; font-size: 12px; height: 30px; line-height: 18px; width: auto; box-sizing: border-box; }
+            #zoomInButton, #zoomOutButton { width: 30px; height: 30px; font-size: 16px; }
         }
     </style>
 </head>
@@ -153,9 +63,7 @@
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
-            if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20";
-            }
+            if (!imageUrl.includes("auto=format")) imageUrl += "?auto=format&q=20";
         }
         image.src = imageUrl;
 
@@ -361,7 +269,7 @@
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
-            if (points.length >= 3) { // 至少 3 个点即可形成框框
+            if (points.length >= 3) {
                 isClosed = true;
                 regions.push([...points]);
                 points = [];
