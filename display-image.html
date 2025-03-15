@@ -2,6 +2,9 @@
 <html>
 <head>
     <style>
+        * {
+            box-sizing: border-box; /* 确保所有元素使用 border-box / Ensure all elements use border-box */
+        }
         #canvasContainer {
             position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
             width: 600px; /* 固定画布宽度 / Fixed canvas width */
@@ -16,11 +19,12 @@
         }
         #buttons {
             margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
+            padding: 0 !important; /* 防止外部样式干扰 / Prevent external style interference */
             text-align: center; /* 居中对齐 / Center align */
-            display: flex; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
-            justify-content: center; /* 按钮水平居中 / Center buttons horizontally */
-            align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-            gap: 25px; /* 增大按钮间距 / Increase button spacing */
+            display: flex !important; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
+            justify-content: center !important; /* 按钮水平居中 / Center buttons horizontally */
+            align-items: center !important; /* 按钮垂直居中 / Center buttons vertically */
+            gap: 40px !important; /* 进一步增大按钮间距，强制应用 / Further increase button spacing, force apply */
             width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
             min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
             min-height: 50px; /* 确保未加载图片时布局稳定 / Ensure layout stability when no image is loaded */
@@ -36,7 +40,7 @@
         }
         #confirmButton, #resetButton {
             padding: 8px 16px; /* 按钮内边距 / Button padding */
-            margin: 5px 0; /* 按钮间距 / Button spacing */
+            margin: 0; /* 移除 margin，避免与 gap 冲突 / Remove margin to avoid conflict with gap */
             font-size: 14px; /* 字体大小 / Font size */
             height: 40px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
             line-height: 24px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
@@ -70,7 +74,7 @@
                 transform: translateX(-50%); /* 水平居中 / Horizontal center */
                 width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
                 min-width: 90vw; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-                gap: 20px; /* 手机端增大间距 / Increase gap on mobile */
+                gap: 30px !important; /* 手机端进一步增大间距，强制应用 / Further increase gap on mobile, force apply */
                 align-items: center; /* 按钮垂直居中 / Center buttons vertically */
                 min-height: 40px; /* 确保未加载图片时布局稳定 / Ensure layout stability when no image is loaded */
             }
