@@ -143,6 +143,8 @@
         const zoomOutButton = document.getElementById("zoomOutButton"); // 缩小按钮 / Zoom out button
         const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
         const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
+        let isDraggingIntent = false; // 标记是否意图拖动
+        let touchTimeout; // 计时器用于区分点击和拖动
 
         // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
@@ -239,8 +241,8 @@
             const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = point.x * imageScale + originX / pixelRatio;
-                const adjustedY = point.y * imageScale + originY / pixelRatio;
+                const adjustedX = (point.x * imageScale + originX) / pixelRatio;
+                const adjustedY = (point.y * imageScale + originY) / pixelRatio;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -284,22 +286,22 @@
             }
         }
 
-        // 处理点击事件（PC 和移动设备） / Handle click events (PC and mobile devices)
+        // 处理鼠标点击事件 / Handle mouse click events
         function handleInteraction(e) {
             if (isClosed) return;
 
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            const rawX = (e.type.includes("touch") ? e.touches[0].clientX : e.clientX) - rect.left;
-            const rawY = (e.type.includes("touch") ? e.touches[0].clientY : e.clientY) - rect.top;
+            const rawX = e.clientX - rect.left; // 仅用于鼠标点击
+            const rawY = e.clientY - rect.top;
 
             // 将点击坐标转换为图片的原始坐标系
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
+            const x = (rawX * pixelRatio - originX) / imageScale;
+            const y = (rawY * pixelRatio - originY) / imageScale;
 
             points.push({ x: x, y: y });
             draw();
-            console.log("Clicked at (adjusted):", x, y);
+            console.log("Mouse clicked at (adjusted):", x, y);
         }
 
         // 处理拖动以平移 / Handle dragging for panning
@@ -343,15 +345,39 @@
         canvas.addEventListener("mouseup", stopDragging);
         canvas.addEventListener("mouseleave", stopDragging);
 
-        // 触摸事件用于拖动 / Touch events for dragging
+        // 触摸事件用于拖动和点击 / Touch events for dragging and clicking
         canvas.addEventListener("touchstart", (e) => {
-            handleInteraction(e);
-            startDragging(e);
-        });
-        canvas.addEventListener("touchmove", drag);
-        canvas.addEventListener("touchend", stopDragging);
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const rawX = e.touches[0].clientX - rect.left;
+            const rawY = e.touches[0].clientY - rect.top;
+            const x = (rawX * pixelRatio - originX) / imageScale;
+            const y = (rawY * pixelRatio - originY) / imageScale;
 
-        // 点击事件用于选择点 / Click event for selecting points
+            isDraggingIntent = false; // 重置拖动意图
+            touchTimeout = setTimeout(() => {
+                if (!isDraggingIntent && !isClosed) {
+                    points.push({ x: x, y: y });
+                    draw();
+                    console.log("Touch clicked at (adjusted):", x, y);
+                }
+            }, 200); // 200ms 阈值区分点击和拖动
+
+            startDragging(e); // 准备拖动
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            isDraggingIntent = true; // 标记为拖动意图
+            clearTimeout(touchTimeout); // 取消点击计时器
+            drag(e);
+        });
+
+        canvas.addEventListener("touchend", (e) => {
+            clearTimeout(touchTimeout); // 清除计时器
+            stopDragging();
+        });
+
+        // 点击事件用于选择点（仅鼠标） / Click event for selecting points (mouse only)
         canvas.addEventListener("click", handleInteraction);
 
         // 确定按钮点击事件 / Confirm button click event
