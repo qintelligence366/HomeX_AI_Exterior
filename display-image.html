@@ -10,6 +10,14 @@
         * {
             box-sizing: border-box; /* 确保所有元素使用 border-box / Ensure all elements use border-box */
         }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px; /* 限制最大宽度 / Limit max width */
+            margin: 0 auto; /* 居中 / Center align */
+        }
         #canvasContainer {
             position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
             width: 600px; /* 固定画布宽度 / Fixed canvas width */
@@ -64,6 +72,9 @@
             cursor: not-allowed; /* 禁用时鼠标样式 / Disabled cursor */
         }
         @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
+            .container {
+                max-width: 90vw; /* 限制最大宽度 / Limit max width */
+            }
             #canvasContainer {
                 width: 90vw; /* 占视口宽度90% / 90% of viewport width */
                 padding-top: 75%; /* 强制 4:3 比例 / Force 4:3 ratio (450/600 = 0.75) */
@@ -100,14 +111,16 @@
     </style>
 </head>
 <body>
-    <div id="canvasContainer">
-        <canvas id="canvas"></canvas>
-    </div>
-    <div id="buttons">
-        <button id="confirmButton">Confirm</button>
-        <button id="resetButton">Reset</button>
-        <button id="zoomInButton">+</button>
-        <button id="zoomOutButton">-</button>
+    <div class="container">
+        <div id="canvasContainer">
+            <canvas id="canvas"></canvas>
+        </div>
+        <div id="buttons">
+            <button id="confirmButton">Confirm</button>
+            <button id="resetButton">Reset</button>
+            <button id="zoomInButton">+</button>
+            <button id="zoomOutButton">-</button>
+        </div>
     </div>
     <script>
         const canvasContainer = document.getElementById("canvasContainer"); // 获取画布容器 / Get canvas container
@@ -131,13 +144,6 @@
         const buttonsDiv = document.getElementById("buttons"); // 按钮容器 / Buttons container
         const pixelRatio = window.devicePixelRatio || 1; // 获取设备像素比 / Get device pixel ratio
 
-        // 强制初始化 canvas 尺寸 / Force initialize canvas size
-        canvas.width = 600 * pixelRatio;
-        canvas.height = 450 * pixelRatio;
-        canvas.style.width = "100%"; // 适应容器宽度 / Fit container width
-        canvas.style.height = "100%"; // 适应容器高度 / Fit container height
-        ctx.scale(pixelRatio, pixelRatio);
-
         // 动态接收 URL 参数 / Dynamically receive URL parameters
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
@@ -158,29 +164,24 @@
             if (imageRatio > canvasRatio) {
                 baseWidth = maxWidth;
                 baseHeight = maxWidth / imageRatio;
-                if (baseHeight > maxHeight) {
-                    baseHeight = maxHeight;
-                    baseWidth = maxHeight * imageRatio;
-                }
             } else {
                 baseHeight = maxHeight;
                 baseWidth = maxHeight * imageRatio;
-                if (baseWidth > maxWidth) {
-                    baseWidth = maxWidth;
-                    baseHeight = maxWidth / imageRatio;
-                }
             }
 
             imageScale = 1; // 初始缩放比例为 1
 
-            // 确保 canvasContainer 和 canvas 尺寸一致
-            canvasContainer.style.width = `${maxWidth}px`;
-            canvasContainer.style.height = `${maxHeight}px`;
+            // 动态调整 canvas 尺寸以适应 canvasContainer
             canvas.width = baseWidth * pixelRatio; // 增加画布宽度以支持高DPI / Increase Canvas width for high DPI
             canvas.height = baseHeight * pixelRatio; // 增加画布高度以支持高DPI / Increase Canvas height for high DPI
             canvas.style.width = `${baseWidth}px`; // 设置 CSS 宽度为逻辑像素 / Set CSS width to logical pixels
             canvas.style.height = `${baseHeight}px`; // 设置 CSS 高度为逻辑像素 / Set CSS height to logical pixels
             ctx.scale(pixelRatio, pixelRatio); // 缩放上下文以匹配物理像素 / Scale context to match physical pixels
+
+            // 动态调整 canvasContainer 尺寸以匹配图片
+            canvasContainer.style.width = `${baseWidth}px`;
+            canvasContainer.style.height = `${baseHeight}px`;
+
             updateZoomButtons(); // 初始化缩放按钮状态 / Initial zoom button state
             draw(); // 初始绘制 / Initial draw
         };
