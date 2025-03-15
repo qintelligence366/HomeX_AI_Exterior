@@ -45,10 +45,8 @@
         let baseWidth, baseHeight;
         let regions = [];
         let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let initialOriginX = 0;
-        let initialOriginY = 0;
+        let lastX = 0;
+        let lastY = 0;
         let startTime = 0;
         let isDraggingIntent = false;
         const confirmButton = document.getElementById("confirmButton");
@@ -207,10 +205,8 @@
 
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
-            startX = rawX;
-            startY = rawY;
-            initialOriginX = originX;
-            initialOriginY = originY;
+            lastX = rawX;
+            lastY = rawY;
             startTime = Date.now();
             isDraggingIntent = false;
             isDragging = true;
@@ -222,13 +218,13 @@
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
             const distance = Math.sqrt(
-                Math.pow(rawX - startX, 2) + Math.pow(rawY - startY, 2)
+                Math.pow(rawX - lastX, 2) + Math.pow(rawY - lastY, 2)
             );
 
             if (distance > dragThreshold) {
                 isDraggingIntent = true;
-                originX = initialOriginX + (rawX - startX) * imageScale;
-                originY = initialOriginY + (rawY - startY) * imageScale;
+                originX += (rawX - lastX) * imageScale;
+                originY += (rawY - lastY) * imageScale;
 
                 const scaledWidth = baseWidth * imageScale;
                 const scaledHeight = baseHeight * imageScale;
@@ -236,6 +232,9 @@
                 const maxY = Math.max(0, scaledHeight - baseHeight);
                 originX = Math.min(0, Math.max(originX, -maxX));
                 originY = Math.min(0, Math.max(originY, -maxY));
+
+                lastX = rawX;
+                lastY = rawY;
 
                 draw();
             }
