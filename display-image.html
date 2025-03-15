@@ -5,107 +5,107 @@
         html, body {
             margin: 0;
             padding: 0;
-            overflow: hidden; /* 防止滑动条出现 / Prevent scrollbars */
+            overflow: hidden;
         }
         * {
-            box-sizing: border-box; /* 确保所有元素使用 border-box / Ensure all elements use border-box */
+            box-sizing: border-box;
         }
         .container {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 600px; /* 限制最大宽度 / Limit max width */
-            margin: 0 auto; /* 居中 / Center align */
+            max-width: 600px;
+            margin: 0 auto;
         }
         #canvasContainer {
-            position: relative; /* 为按钮绝对定位 / For absolute positioning of buttons */
-            width: 600px; /* 固定画布宽度 / Fixed canvas width */
-            height: 450px; /* 固定画布高度 / Fixed canvas height */
-            max-width: 600px; /* 限制最大宽度 / Limit max width */
-            max-height: 450px; /* 限制最大高度 / Limit max height */
-            overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
-            border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
+            position: relative;
+            width: 600px;
+            height: 450px;
+            max-width: 600px;
+            max-height: 450px;
+            overflow: hidden;
+            border: 1px solid black;
         }
         #canvas {
-            position: absolute; /* 允许拖动 / Allow dragging */
+            position: absolute;
             top: 0;
             left: 0;
-            width: 100%; /* 适应容器宽度 / Fit container width */
-            height: 100%; /* 适应容器高度 / Fit container height */
+            width: 100%;
+            height: 100%;
         }
         #buttons {
-            margin-top: 10px; /* 按钮与容器间距 / Margin between buttons and container */
-            padding: 0 !important; /* 防止外部样式干扰 / Prevent external style interference */
-            text-align: center; /* 居中对齐 / Center align */
-            display: flex !important; /* 使用 flex 布局水平排列 / Use flex layout for horizontal alignment */
-            justify-content: center !important; /* 按钮水平居中 / Center buttons horizontally */
-            align-items: center !important; /* 按钮垂直居中 / Center buttons vertically */
-            gap: 40px !important; /* 按钮间距，强制应用 / Button spacing, force apply */
-            width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
-            min-width: 600px; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-            min-height: 50px; /* 确保未加载图片时布局稳定 / Ensure layout stability when no image is loaded */
+            margin-top: 10px;
+            padding: 0 !important;
+            text-align: center;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            gap: 40px !important;
+            width: auto;
+            min-width: 600px;
+            min-height: 50px;
         }
         #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
-            padding: 8px 16px; /* 按钮内边距 / Button padding */
-            margin: 0; /* 移除 margin，避免与 gap 冲突 / Remove margin to avoid conflict with gap */
-            font-size: 14px; /* 字体大小 / Font size */
-            height: 40px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
-            line-height: 24px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
-            cursor: pointer; /* 鼠标指针样式 / Cursor style */
-            box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
+            padding: 8px 16px;
+            margin: 0;
+            font-size: 14px;
+            height: 40px;
+            line-height: 24px;
+            cursor: pointer;
+            box-sizing: border-box;
         }
         #zoomInButton, #zoomOutButton {
-            width: 40px; /* 圆形按钮大小 / Circular button size */
-            height: 40px; /* 圆形按钮大小 / Circular button size */
-            border-radius: 50%; /* 设为圆形 / Make circular */
-            border: 1px solid #000; /* 边框增加可见性 / Border for visibility */
-            background: #fff; /* 白色背景 / White background */
-            font-size: 20px; /* 符号大小 / Symbol size */
-            display: flex; /* 使用 flex 布局居中 / Use flex to center content */
-            justify-content: center; /* 水平居中 / Center horizontally */
-            align-items: center; /* 垂直居中 / Center vertically */
-            cursor: pointer; /* 鼠标指针样式 / Cursor style */
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #000;
+            background: #fff;
+            font-size: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
         }
         #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc; /* 禁用时灰色背景 / Gray background when disabled */
-            cursor: not-allowed; /* 禁用时鼠标样式 / Disabled cursor */
+            background: #ccc;
+            cursor: not-allowed;
         }
-        @media (max-width: 768px) { /* 手机端样式优化 / Mobile style optimization */
+        @media (max-width: 768px) {
             .container {
-                max-width: 90vw; /* 限制最大宽度 / Limit max width */
+                max-width: 90vw;
             }
             #canvasContainer {
-                width: 90vw; /* 占视口宽度90% / 90% of viewport width */
-                padding-top: 75%; /* 强制 4:3 比例 / Force 4:3 ratio (450/600 = 0.75) */
-                max-width: 90vw; /* 限制最大宽度 / Limit max width */
-                max-height: calc(90vw * 0.75); /* 限制最大高度为 4:3 比例 / Limit max height to 4:3 ratio */
-                overflow: hidden; /* 隐藏溢出以支持拖动 / Hide overflow for dragging */
-                border: 1px solid black; /* 设置边框以可视化区域 / Border to visualize area */
+                width: 90vw;
+                padding-top: 75%;
+                max-width: 90vw;
+                max-height: calc(90vw * 0.75);
+                overflow: hidden;
+                border: 1px solid black;
             }
             #buttons {
-                position: fixed; /* 固定位置 / Fixed position */
-                bottom: 10px; /* 底部间距 / Bottom margin */
-                left: 50%; /* 居中 / Center */
-                transform: translateX(-50%); /* 水平居中 / Horizontal center */
-                width: auto; /* 自动宽度以适应内容 / Auto width to fit content */
-                min-width: 90vw; /* 最小宽度以确保初始居中 / Minimum width to ensure initial centering */
-                gap: 30px !important; /* 手机端按钮间距，强制应用 / Mobile button spacing, force apply */
-                align-items: center; /* 按钮垂直居中 / Center buttons vertically */
-                min-height: 40px; /* 确保未加载图片时布局稳定 / Ensure layout stability when no image is loaded */
+                position: fixed;
+                bottom: 10px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: auto;
+                min-width: 90vw;
+                gap: 30px !important;
+                align-items: center;
+                min-height: 40px;
             }
             #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
-                padding: 6px 12px; /* 缩小内边距以适应小屏幕 / Reduce padding for smaller screens */
-                font-size: 12px; /* 缩小字体大小 / Reduce font size */
-                height: 30px; /* 统一高度以匹配缩放按钮 / Match height with zoom buttons */
-                line-height: 18px; /* 调整行高以垂直居中内容 / Adjust line height for vertical centering */
-                width: auto; /* 自动宽度 / Auto width */
-                box-sizing: border-box; /* 包含内边距和边框 / Include padding and border in width */
+                padding: 6px 12px;
+                font-size: 12px;
+                height: 30px;
+                line-height: 18px;
+                width: auto;
+                box-sizing: border-box;
             }
             #zoomInButton, #zoomOutButton {
-                width: 30px; /* 手机端更小尺寸 / Smaller size for mobile */
+                width: 30px;
                 height: 30px;
-                font-size: 16px; /* 手机端更小符号 / Smaller symbol for mobile */
+                font-size: 16px;
             }
         }
     </style>
@@ -145,10 +145,9 @@
         const zoomOutButton = document.getElementById("zoomOutButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
-        const dragThreshold = 5; // 拖动距离阈值（像素）
-        const clickTimeThreshold = 300; // 点击时间阈值（毫秒）
+        const dragThreshold = 5;
+        const clickTimeThreshold = 300;
 
-        // 动态接收 URL 参数
         const params = new URLSearchParams(window.location.search);
         let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
         if (imageUrl && !imageUrl.includes("via.placeholder")) {
@@ -196,7 +195,7 @@
         };
 
         image.onerror = () => {
-            console.error("图片加载失败 / Image failed to load:", imageUrl);
+            console.error("图片加载失败:", imageUrl);
             buttonsDiv.style.display = "block";
             draw();
         };
@@ -272,11 +271,12 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 1; // 改为 1，更严格的闭合条件
+                    const distanceThreshold = 10; // 设为 10
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
                         ctx.stroke();
+                        isClosed = true; // 自动设置 isClosed
                     }
                 }
             }
@@ -284,8 +284,19 @@
 
         function getEventPosition(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
-            const clientY = e.type.includes("touch") ? e.touches[0].clientY : e.clientY;
+            let clientX, clientY;
+            if (e.type.includes("touch")) {
+                if (e.type === "touchend") {
+                    clientX = e.changedTouches[0].clientX;
+                    clientY = e.changedTouches[0].clientY;
+                } else {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
             const rawX = clientX - rect.left;
             const rawY = clientY - rect.top;
             return { rawX, rawY };
@@ -347,7 +358,6 @@
             isDragging = false;
         }
 
-        // 统一的事件监听器
         canvas.addEventListener("mousedown", handleStart);
         canvas.addEventListener("mousemove", handleMove);
         canvas.addEventListener("mouseup", handleEnd);
