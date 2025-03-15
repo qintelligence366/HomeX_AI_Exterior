@@ -233,45 +233,49 @@
 
         // 绘制图片和多边形 / Draw image and polygon
         function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 使用逻辑像素清除画布 / Clear canvas using logical pixels
-            ctx.save(); // 保存当前状态 / Save current state
-            ctx.scale(imageScale, imageScale); // 仅对图片应用缩放 / Apply zoom to image only
-            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移 / Apply offset
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片，按比例缩放 / Draw image, scaled to fit
-            ctx.restore(); // 恢复状态 / Restore state
+            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio); // 使用逻辑像素清除画布
+            ctx.save(); // 保存当前状态
+            ctx.scale(imageScale, imageScale); // 对图片应用缩放
+            ctx.translate(originX / pixelRatio, originY / pixelRatio); // 应用偏移
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight); // 绘制图片
+            ctx.restore(); // 恢复状态
 
-            // 使用固定大小绘制红点 / Draw red points with fixed size
-            const dotRadius = 3; // 固定红点大小为 3 像素，不随缩放变化 / Fixed dot radius to 3 pixels, independent of zoom
+            // 使用固定大小绘制红点
+            const dotRadius = 3; // 固定红点大小为 3 像素
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = (point.x * imageScale + originX) / pixelRatio;
-                const adjustedY = (point.y * imageScale + originY) / pixelRatio;
+                const adjustedX = point.x * imageScale + originX;
+                const adjustedY = point.y * imageScale + originY;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
             });
 
-            // 绘制所有已确认的框选区域 / Draw all confirmed regions
+            // 绘制所有已确认的框选区域
             regions.forEach(region => {
                 ctx.beginPath();
-                ctx.moveTo(region[0].x - originX, region[0].y - originY);
+                const startX = region[0].x * imageScale + originX;
+                const startY = region[0].y * imageScale + originY;
+                ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    ctx.lineTo(region[i].x - originX, region[i].y - originY);
+                    const adjustedX = region[i].x * imageScale + originX;
+                    const adjustedY = region[i].y * imageScale + originY;
+                    ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "lightblue"; // 框选线颜色 / Polygon outline color
+                ctx.strokeStyle = "lightblue"; // 框选线颜色
                 ctx.stroke();
             });
 
-            // 绘制当前正在框选的多边形 / Draw the current polygon being selected
+            // 绘制当前正在框选的多边形
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = (points[0].x * imageScale + originX) / pixelRatio;
-                const startY = (points[0].y * imageScale + originY) / pixelRatio;
+                const startX = points[0].x * imageScale + originX;
+                const startY = points[0].y * imageScale + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x * imageScale + originX) / pixelRatio;
-                    const adjustedY = (points[i].y * imageScale + originY) / pixelRatio;
+                    const adjustedX = points[i].x * imageScale + originX;
+                    const adjustedY = points[i].y * imageScale + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -281,7 +285,7 @@
                 } else if (points.length >= 4) {
                     const firstPoint = points[0];
                     const lastPoint = points[points.length - 1];
-                    const distanceThreshold = 90; // 调整距离阈值以适应更大画布 / Adjust distance threshold to fit larger canvas
+                    const distanceThreshold = 90; // 调整距离阈值以适应更大画布
                     if (getDistance(firstPoint, lastPoint) < distanceThreshold) {
                         ctx.closePath();
                         ctx.strokeStyle = "lightblue";
