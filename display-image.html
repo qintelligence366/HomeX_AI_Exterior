@@ -253,8 +253,8 @@
                 const dotRadius = 3;
                 points.forEach(point => {
                     ctx.beginPath();
-                    const adjustedX = (point.x * imageScale) + originX;
-                    const adjustedY = (point.y * imageScale) + originY;
+                    const adjustedX = point.x * baseWidth * imageScale + originX;
+                    const adjustedY = point.y * baseHeight * imageScale + originY;
                     ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                     ctx.fillStyle = "red";
                     ctx.fill();
@@ -262,12 +262,12 @@
 
                 regions.forEach(region => {
                     ctx.beginPath();
-                    const startX = (region[0].x * imageScale) + originX;
-                    const startY = (region[0].y * imageScale) + originY;
+                    const startX = region[0].x * baseWidth * imageScale + originX;
+                    const startY = region[0].y * baseHeight * imageScale + originY;
                     ctx.moveTo(startX, startY);
                     for (let i = 1; i < region.length; i++) {
-                        const adjustedX = (region[i].x * imageScale) + originX;
-                        const adjustedY = (region[i].y * imageScale) + originY;
+                        const adjustedX = region[i].x * baseWidth * imageScale + originX;
+                        const adjustedY = region[i].y * baseHeight * imageScale + originY;
                         ctx.lineTo(adjustedX, adjustedY);
                     }
                     ctx.closePath();
@@ -277,12 +277,12 @@
 
                 if (points.length > 1) {
                     ctx.beginPath();
-                    const startX = (points[0].x * imageScale) + originX;
-                    const startY = (points[0].y * imageScale) + originY;
+                    const startX = points[0].x * baseWidth * imageScale + originX;
+                    const startY = points[0].y * baseHeight * imageScale + originY;
                     ctx.moveTo(startX, startY);
                     for (let i = 1; i < points.length; i++) {
-                        const adjustedX = (points[i].x * imageScale) + originX;
-                        const adjustedY = (points[i].y * imageScale) + originY;
+                        const adjustedX = points[i].x * baseWidth * imageScale + originX;
+                        const adjustedY = points[i].y * baseHeight * imageScale + originY;
                         ctx.lineTo(adjustedX, adjustedY);
                     }
                     if (isClosed) {
@@ -299,23 +299,22 @@
             function getEventPosition(e) {
                 const rect = canvas.getBoundingClientRect();
                 let clientX, clientY;
+
                 if (e.type.includes("touch")) {
-                    if (e.type === "touchend") {
-                        clientX = e.changedTouches[0].clientX;
-                        clientY = e.changedTouches[0].clientY;
-                    } else {
-                        clientX = e.touches[0].clientX;
-                        clientY = e.touches[0].clientY;
-                    }
+                    clientX = e.touches[0]?.clientX || e.changedTouches[0].clientX;
+                    clientY = e.touches[0]?.clientY || e.changedTouches[0].clientY;
                 } else {
                     clientX = e.clientX;
                     clientY = e.clientY;
                 }
-                const rawX = clientX - rect.left;
-                const rawY = clientY - rect.top;
-                return { 
-                    x: (rawX - originX) / imageScale, 
-                    y: (rawY - originY) / imageScale,
+
+                const rawX = (clientX - rect.left - originX) / imageScale;
+                const rawY = (clientY - rect.top - originY) / imageScale;
+
+                // 返回相对原图的比例坐标
+                return {
+                    x: rawX / baseWidth,
+                    y: rawY / baseHeight,
                     rawX,
                     rawY
                 };
@@ -355,7 +354,7 @@
                 if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
                     points.push({ x, y });
                     draw();
-                    console.log("Clicked at (adjusted):", x, y);
+                    console.log("Clicked at (relative):", x, y);
                 }
 
                 isDragging = false;
@@ -415,7 +414,7 @@
             saveButton.addEventListener("click", () => {
                 const highResImage = new Image();
                 highResImage.crossOrigin = "anonymous"; // 允许跨域加载
-                highResImage.src = originalImageUrl; // 确保加载原图
+                highResImage.src = originalImageUrl;
 
                 highResImage.onload = () => {
                     const highResCanvas = document.createElement("canvas");
@@ -431,34 +430,26 @@
                     // 在原图 Canvas 上绘制原图
                     highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
 
-                    // 计算缩放比例
-                    const scaleX = highResImage.width / baseWidth;
-                    const scaleY = highResImage.height / baseHeight;
-
-                    // 计算原图上的 originX 和 originY（考虑缩放）
-                    const translatedOriginX = (originX / baseWidth) * highResImage.width;
-                    const translatedOriginY = (originY / baseHeight) * highResImage.height;
-
-                    // 修正红点映射，确保位置正确
-                    const dotRadius = 5; // 调整点大小
+                    // 修正点的绘制
+                    const dotRadius = 5;
                     points.forEach(point => {
                         highResCtx.beginPath();
-                        const adjustedX = ((point.x * imageScale) + originX) * scaleX;
-                        const adjustedY = ((point.y * imageScale) + originY) * scaleY;
+                        const adjustedX = point.x * highResImage.width;
+                        const adjustedY = point.y * highResImage.height;
                         highResCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                         highResCtx.fillStyle = "red";
                         highResCtx.fill();
                     });
 
-                    // 修正框框映射，确保位置正确
+                    // 修正框框的绘制
                     regions.forEach(region => {
                         highResCtx.beginPath();
-                        const startX = ((region[0].x * imageScale) + originX) * scaleX;
-                        const startY = ((region[0].y * imageScale) + originY) * scaleY;
+                        const startX = region[0].x * highResImage.width;
+                        const startY = region[0].y * highResImage.height;
                         highResCtx.moveTo(startX, startY);
                         for (let i = 1; i < region.length; i++) {
-                            const adjustedX = ((region[i].x * imageScale) + originX) * scaleX;
-                            const adjustedY = ((region[i].y * imageScale) + originY) * scaleY;
+                            const adjustedX = region[i].x * highResImage.width;
+                            const adjustedY = region[i].y * highResImage.height;
                             highResCtx.lineTo(adjustedX, adjustedY);
                         }
                         highResCtx.closePath();
