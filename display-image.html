@@ -35,13 +35,13 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 10px;
+            margin-top: 5px; /* 从 10px 减小到 5px，让按钮离图片更近 */
             padding: 0 !important;
             text-align: center;
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            gap: 20px !important; /* 调整为更小的间距，从 40px 改为 20px */
+            gap: 20px !important;
             width: auto;
             min-width: 600px;
             min-height: 50px;
@@ -85,12 +85,12 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 10px;
+                bottom: 20px; /* 从 10px 调整到 20px，让按钮上移 */
                 left: 50%;
                 transform: translateX(-50%);
                 width: auto;
                 min-width: 90vw;
-                gap: 15px !important; /* 移动端间距从 30px 改为 15px */
+                gap: 15px !important;
                 align-items: center;
                 min-height: 40px;
             }
