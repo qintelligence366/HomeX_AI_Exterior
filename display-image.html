@@ -305,9 +305,9 @@
             if (isClosed) return;
 
             e.preventDefault();
-            const { x, y } = getEventPosition(e);
-            startX = x;
-            startY = y;
+            const { rawX, rawY } = getEventPosition(e); // 使用 rawX 和 rawY
+            startX = rawX;
+            startY = rawY;
             initialOriginX = originX;
             initialOriginY = originY;
             startTime = Date.now();
