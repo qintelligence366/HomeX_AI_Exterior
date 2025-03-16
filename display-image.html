@@ -47,7 +47,7 @@
             min-height: 50px;
             margin-left: 20px; /* 离左侧20px */
         }
-        #confirmButton, #undoButton, #saveButton {
+        #confirmButton, #undoButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -82,7 +82,7 @@
                 gap: 15px !important;
                 min-height: 40px;
             }
-            #confirmButton, #undoButton, #saveButton {
+            #confirmButton, #undoButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -101,7 +101,6 @@
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
             <button id="undoButton">Undo</button>
-            <button id="saveButton">Save</button>
         </div>
     </div>
     <script>
@@ -116,7 +115,6 @@
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
         const undoButton = document.getElementById("undoButton");
-        const saveButton = document.getElementById("saveButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const clickTimeThreshold = 300;
