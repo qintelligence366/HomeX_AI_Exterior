@@ -170,6 +170,7 @@
 
             const params = new URLSearchParams(window.location.search);
             let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
+            let originalImageUrl = imageUrl; // 假设原图 URL 与小图 URL 相同，实际需提供原图 URL
             if (imageUrl && !imageUrl.includes("via.placeholder")) {
                 if (!imageUrl.includes("auto=format")) {
                     imageUrl += "?auto=format&q=20";
@@ -295,72 +296,6 @@
                 }
             }
 
-            // 绘制到 highResCanvas，用于保存原图尺寸
-            function drawOffscreenCanvas() {
-                if (!image.complete || image.naturalWidth === 0) {
-                    console.error("Image not loaded yet!");
-                    return null;
-                }
-
-                const highResImage = new Image();
-                highResImage.crossOrigin = "anonymous"; // 允许跨域加载
-                highResImage.src = imageUrl;
-
-                highResImage.onload = () => {
-                    const highResCanvas = document.createElement("canvas");
-                    highResCanvas.width = highResImage.width;
-                    highResCanvas.height = highResImage.height;
-                    const highResCtx = highResCanvas.getContext("2d");
-
-                    if (!highResCtx) {
-                        console.error("Failed to get highResCanvas context");
-                        return null;
-                    }
-
-                    // 绘制原图
-                    highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
-
-                    // 计算小图到原图的缩放比例
-                    const scaleX = highResImage.width / (baseWidth * imageScale);
-                    const scaleY = highResImage.height / (baseHeight * imageScale);
-
-                    // 映射小图上的红点到原图
-                    const dotRadius = 5; // 调整点大小
-                    points.forEach(point => {
-                        highResCtx.beginPath();
-                        const adjustedX = (point.x + originX / imageScale) * scaleX;
-                        const adjustedY = (point.y + originY / imageScale) * scaleY;
-                        highResCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                        highResCtx.fillStyle = "red";
-                        highResCtx.fill();
-                    });
-
-                    // 映射小图上的框框到原图
-                    regions.forEach(region => {
-                        highResCtx.beginPath();
-                        const startX = (region[0].x + originX / imageScale) * scaleX;
-                        const startY = (region[0].y + originY / imageScale) * scaleY;
-                        highResCtx.moveTo(startX, startY);
-                        for (let i = 1; i < region.length; i++) {
-                            const adjustedX = (region[i].x + originX / imageScale) * scaleX;
-                            const adjustedY = (region[i].y + originY / imageScale) * scaleY;
-                            highResCtx.lineTo(adjustedX, adjustedY);
-                        }
-                        highResCtx.closePath();
-                        highResCtx.strokeStyle = "lightblue";
-                        highResCtx.stroke();
-                    });
-
-                    return highResCanvas;
-                };
-
-                highResImage.onerror = () => {
-                    console.error("Failed to load high-resolution image:", imageUrl);
-                    return null;
-                };
-                return null; // 初始返回 null，等待 onload
-            }
-
             function getEventPosition(e) {
                 const rect = canvas.getBoundingClientRect();
                 let clientX, clientY;
@@ -478,24 +413,73 @@
 
             // 保存高分辨率图片
             saveButton.addEventListener("click", () => {
-                const highResCanvas = drawOffscreenCanvas();
-                if (!highResCanvas || !highResCanvas.getContext) {
-                    console.error("Failed to create or get context from highResCanvas");
-                    return;
-                }
+                const highResImage = new Image();
+                highResImage.crossOrigin = "anonymous"; // 允许跨域加载
+                highResImage.src = originalImageUrl; // 确保加载原图
 
-                const dataURL = highResCanvas.toDataURL("image/png");
-                const link = document.createElement("a");
-                link.href = dataURL;
-                link.download = "annotated_image.png";
+                highResImage.onload = () => {
+                    const highResCanvas = document.createElement("canvas");
+                    highResCanvas.width = highResImage.width;
+                    highResCanvas.height = highResImage.height;
+                    const highResCtx = highResCanvas.getContext("2d");
 
-                document.body.appendChild(link);
-                setTimeout(() => {
-                    link.click();
-                    document.body.removeChild(link);
-                }, 100);
+                    if (!highResCtx) {
+                        console.error("Failed to get highResCanvas context");
+                        return;
+                    }
 
-                console.log("✅ Saved high-resolution image.");
+                    // 绘制原图
+                    highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
+
+                    // 计算小图到原图的缩放比例
+                    const scaleX = highResImage.width / baseWidth;
+                    const scaleY = highResImage.height / baseHeight;
+
+                    // 映射小图上的红点到原图
+                    const dotRadius = 5; // 调整点大小
+                    points.forEach(point => {
+                        highResCtx.beginPath();
+                        const adjustedX = (point.x * scaleX) + (originX * scaleX / imageScale);
+                        const adjustedY = (point.y * scaleY) + (originY * scaleY / imageScale);
+                        highResCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                        highResCtx.fillStyle = "red";
+                        highResCtx.fill();
+                    });
+
+                    // 映射小图上的框框到原图
+                    regions.forEach(region => {
+                        highResCtx.beginPath();
+                        const startX = (region[0].x * scaleX) + (originX * scaleX / imageScale);
+                        const startY = (region[0].y * scaleY) + (originY * scaleY / imageScale);
+                        highResCtx.moveTo(startX, startY);
+                        for (let i = 1; i < region.length; i++) {
+                            const adjustedX = (region[i].x * scaleX) + (originX * scaleX / imageScale);
+                            const adjustedY = (region[i].y * scaleY) + (originY * scaleY / imageScale);
+                            highResCtx.lineTo(adjustedX, adjustedY);
+                        }
+                        highResCtx.closePath();
+                        highResCtx.strokeStyle = "lightblue";
+                        highResCtx.stroke();
+                    });
+
+                    // 生成高分辨率图片并保存
+                    const dataURL = highResCanvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.href = dataURL;
+                    link.download = "annotated_image.png";
+
+                    document.body.appendChild(link);
+                    setTimeout(() => {
+                        link.click();
+                        document.body.removeChild(link);
+                    }, 100);
+
+                    console.log("✅ Saved high-resolution image.");
+                };
+
+                highResImage.onerror = () => {
+                    console.error("❌ Failed to load high-resolution image:", originalImageUrl);
+                };
             });
 
             console.log("Image URL:", imageUrl);
