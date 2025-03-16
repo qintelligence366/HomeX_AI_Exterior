@@ -47,7 +47,7 @@
             min-height: 50px;
             margin-left: 20px; /* 离左侧20px */
         }
-        #confirmButton, #undoButton {
+        #confirmButton, #undoButton, #saveButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -82,7 +82,7 @@
                 gap: 15px !important;
                 min-height: 40px;
             }
-            #confirmButton, #undoButton {
+            #confirmButton, #undoButton, #saveButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -101,6 +101,7 @@
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
             <button id="undoButton">Undo</button>
+            <button id="saveButton">Save</button>
         </div>
     </div>
     <script>
@@ -115,6 +116,7 @@
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
         const undoButton = document.getElementById("undoButton");
+        const saveButton = document.getElementById("saveButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const clickTimeThreshold = 300;
@@ -151,10 +153,11 @@
             baseWidth *= fitScale;
             baseHeight *= fitScale;
 
+            // 设置 canvasContainer 显示适配尺寸，但 canvas 使用原图尺寸
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
-            canvas.width = baseWidth * pixelRatio;
-            canvas.height = baseHeight * pixelRatio;
+            canvas.width = image.width * pixelRatio;
+            canvas.height = image.height * pixelRatio;
             canvas.style.width = `${baseWidth}px`;
             canvas.style.height = `${baseHeight}px`;
             ctx.scale(pixelRatio, pixelRatio);
@@ -170,13 +173,16 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
+            ctx.drawImage(image, 0, 0, image.width, image.height);
+
+            const dotRatioX = image.width / baseWidth;
+            const dotRatioY = image.height / baseHeight;
 
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = point.x;
-                const adjustedY = point.y;
+                const adjustedX = point.x * dotRatioX;
+                const adjustedY = point.y * dotRatioY;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -184,12 +190,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = region[0].x;
-                const startY = region[0].y;
+                const startX = region[0].x * dotRatioX;
+                const startY = region[0].y * dotRatioY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x;
-                    const adjustedY = region[i].y;
+                    const adjustedX = region[i].x * dotRatioX;
+                    const adjustedY = region[i].y * dotRatioY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -199,12 +205,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = points[0].x;
-                const startY = points[0].y;
+                const startX = points[0].x * dotRatioX;
+                const startY = points[0].y * dotRatioY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x;
-                    const adjustedY = points[i].y;
+                    const adjustedX = points[i].x * dotRatioX;
+                    const adjustedY = points[i].y * dotRatioY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -254,7 +260,7 @@
         canvas.addEventListener("mouseup", handleEnd);
         canvas.addEventListener("touchstart", (e) => {
             e.preventDefault();
-            startTime = Date.now(); // 只设置 startTime，不直接调用 handleEnd
+            startTime = Date.now();
         });
         canvas.addEventListener("touchend", (e) => {
             e.preventDefault();
@@ -262,7 +268,7 @@
         });
 
         confirmButton.addEventListener("click", () => {
-            if (points.length >= 4) { // 至少需要4个点生成框框
+            if (points.length >= 4) {
                 isClosed = true;
                 regions.push([...points]);
                 points = [];
@@ -282,6 +288,15 @@
                 draw();
                 console.log("Undo: Removed last region, remaining regions:", regions);
             }
+        });
+
+        saveButton.addEventListener("click", () => {
+            const dataURL = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = dataURL;
+            link.download = "annotated_image.png";
+            link.click();
+            console.log("Image saved:", dataURL);
         });
 
         console.log("Image URL:", imageUrl);
