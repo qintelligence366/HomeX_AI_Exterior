@@ -46,7 +46,7 @@
             min-width: 600px;
             min-height: 50px;
         }
-        #confirmButton, #resetButton, #undoButton {
+        #confirmButton, #clearButton, #undoButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -78,7 +78,7 @@
                 align-items: center;
                 min-height: 40px;
             }
-            #confirmButton, #resetButton, #undoButton {
+            #confirmButton, #clearButton, #undoButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -96,7 +96,7 @@
         </div>
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
-            <button id="resetButton">Reset</button>
+            <button id="clearButton">Clear</button>
             <button id="undoButton">Undo</button>
         </div>
     </div>
@@ -111,7 +111,7 @@
         let regions = [];
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
-        const resetButton = document.getElementById("resetButton");
+        const clearButton = document.getElementById("clearButton"); // 改为 clearButton
         const undoButton = document.getElementById("undoButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
@@ -253,7 +253,7 @@
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
-            if (points.length >= 4) { // 修改为至少需要4个点生成框框
+            if (points.length >= 4) { // 至少需要4个点生成框框
                 isClosed = true;
                 regions.push([...points]);
                 points = [];
@@ -263,11 +263,11 @@
             }
         });
 
-        resetButton.addEventListener("click", () => {
+        clearButton.addEventListener("click", () => {
             if (regions.length > 0) {
                 regions.pop(); // 移除最后一个框框
                 draw();
-                console.log("Reset: Removed last region, remaining regions:", regions);
+                console.log("Clear: Removed last region, remaining regions:", regions);
             }
         });
 
