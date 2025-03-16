@@ -228,8 +228,8 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
             ctx.save();
+            ctx.translate(originX, originY);
             ctx.scale(imageScale, imageScale);
-            ctx.translate(originX / pixelRatio, originY / pixelRatio);
             ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
             ctx.restore();
 
@@ -294,8 +294,8 @@
             const rawX = clientX - rect.left;
             const rawY = clientY - rect.top;
             return { 
-                x: (rawX / imageScale) - (originX / imageScale), 
-                y: (rawY / imageScale) - (originY / imageScale),
+                x: (rawX - originX) / imageScale, 
+                y: (rawY - originY) / imageScale,
                 rawX,
                 rawY
             };
