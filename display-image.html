@@ -22,8 +22,6 @@
             position: relative;
             width: 600px;
             height: 450px;
-            max-width: 600px;
-            max-height: 450px;
             overflow: hidden;
             border: 1px solid black;
         }
@@ -31,65 +29,30 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
         }
         #buttons {
-            margin-top: 5px; /* 5px最合适 */
-            padding: 0 !important;
-            text-align: left; /* 左侧对齐 */
-            display: flex !important;
-            justify-content: flex-start !important; /* 左侧对齐 */
-            align-items: center !important;
-            gap: 20px !important;
-            width: auto;
+            margin-top: 5px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
             min-width: 600px;
-            min-height: 50px;
-            margin-left: 20px; /* 离左侧20px */
         }
-        #confirmButton, #undoButton {
+        #buttons button {
             padding: 8px 16px;
-            margin: 0;
-            font-size: 14px;
-            height: 40px;
-            line-height: 24px;
             cursor: pointer;
-            box-sizing: border-box;
+            height: 40px;
         }
-        @media (max-width: 768px) {
-            .container {
-                max-width: 90vw;
-            }
-            #canvasContainer {
-                width: 90vw;
-                padding-top: 75%;
-                max-width: 90vw;
-                max-height: calc(90vw * 0.75);
-                overflow: hidden;
-                border: 1px solid black;
-            }
-            #buttons {
-                position: fixed;
-                bottom: 30px; /* 30px最合适 */
-                left: 20px; /* 离左侧20px */
-                transform: none; /* 移除居中转换 */
-                width: auto;
-                padding: 0 !important;
-                text-align: left; /* 左侧对齐 */
-                display: flex !important;
-                justify-content: flex-start !important; /* 左侧对齐 */
-                align-items: center !important;
-                gap: 15px !important;
-                min-height: 40px;
-            }
-            #confirmButton, #undoButton {
-                padding: 6px 12px;
-                font-size: 12px;
-                height: 30px;
-                line-height: 18px;
-                width: auto;
-                box-sizing: border-box;
-            }
+        #zoomInButton, #zoomOutButton {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #000;
+            background: #fff;
+            font-size: 20px;
+        }
+        #zoomInButton.disabled, #zoomOutButton.disabled {
+            background: #ccc;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -100,9 +63,13 @@
         </div>
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
+            <button id="resetButton">Reset</button>
             <button id="undoButton">Undo</button>
+            <button id="zoomInButton">+</button>
+            <button id="zoomOutButton">-</button>
         </div>
     </div>
+
     <script>
         const canvasContainer = document.getElementById("canvasContainer");
         const canvas = document.getElementById("canvas");
@@ -110,191 +77,165 @@
         let image = new Image();
         let points = [];
         let isClosed = false;
+        let imageScale = 1;
+        let originX = 0;
+        let originY = 0;
         let baseWidth, baseHeight;
         let regions = [];
-        let startTime = 0;
-        const confirmButton = document.getElementById("confirmButton");
-        const undoButton = document.getElementById("undoButton");
-        const buttonsDiv = document.getElementById("buttons");
-        const pixelRatio = window.devicePixelRatio || 1;
-        const clickTimeThreshold = 300;
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let initialOriginX = 0;
+        let initialOriginY = 0;
 
-        const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
-        if (imageUrl && !imageUrl.includes("via.placeholder")) {
-            if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20";
-            }
-        }
-        image.src = imageUrl;
+        const confirmButton = document.getElementById("confirmButton");
+        const resetButton = document.getElementById("resetButton");
+        const undoButton = document.getElementById("undoButton");
+        const zoomInButton = document.getElementById("zoomInButton");
+        const zoomOutButton = document.getElementById("zoomOutButton");
+
+        image.src = "https://via.placeholder.com/600";
 
         image.onload = () => {
-            let maxWidth = 600;
-            let maxHeight = 450;
-            const imageRatio = image.width / image.height;
-            const canvasRatio = maxWidth / maxHeight;
+            baseWidth = image.width;
+            baseHeight = image.height;
 
-            if (window.innerWidth <= 768) {
-                maxWidth = window.innerWidth * 0.9;
-                maxHeight = maxWidth * 0.75;
-            }
+            const maxWidth = 600;
+            const maxHeight = 450;
+            const scale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
+            baseWidth *= scale;
+            baseHeight *= scale;
 
-            if (imageRatio > canvasRatio) {
-                baseWidth = maxWidth;
-                baseHeight = maxWidth / imageRatio;
-            } else {
-                baseHeight = maxHeight;
-                baseWidth = maxHeight * imageRatio;
-            }
-
-            const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
-            baseWidth *= fitScale;
-            baseHeight *= fitScale;
-
-            // 强制宽度为 4000，像素高度根据比例调整
-            let canvasWidth = 4000;
-            let canvasHeight = Math.round(4000 / imageRatio);
-            // 设置 canvasContainer 显示适配尺寸
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
-            canvas.width = canvasWidth;
-            canvas.height = canvasHeight;
-            canvas.style.width = `${baseWidth}px`;
-            canvas.style.height = `${baseHeight}px`;
-            ctx.scale(pixelRatio, pixelRatio);
+            canvas.width = baseWidth;
+            canvas.height = baseHeight;
 
-            // 提高下载质量
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-
-            draw();
-        };
-
-        image.onerror = () => {
-            console.error("图片加载失败:", imageUrl);
-            buttonsDiv.style.display = "block";
             draw();
         };
 
         function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-            ctx.drawImage(image, 0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            const dotRadius = 3; // 红点大小固定
-            points.forEach(point => {
+            ctx.save();
+            ctx.translate(originX, originY);
+            ctx.scale(imageScale, imageScale);
+            ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
+            ctx.restore();
+
+            drawPoints();
+            drawRegions();
+        }
+
+        function drawPoints() {
+            ctx.save();
+            ctx.translate(originX, originY);
+            ctx.scale(imageScale, imageScale);
+            ctx.fillStyle = "red";
+            points.forEach(({ x, y }) => {
                 ctx.beginPath();
-                const adjustedX = point.x * (canvas.width / baseWidth);
-                const adjustedY = point.y * (canvas.height / baseHeight);
-                ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                ctx.fillStyle = "red";
+                ctx.arc(x, y, 3 / imageScale, 0, 2 * Math.PI);
                 ctx.fill();
             });
+            ctx.restore();
+        }
 
+        function drawRegions() {
+            ctx.save();
+            ctx.translate(originX, originY);
+            ctx.scale(imageScale, imageScale);
+            ctx.strokeStyle = "blue";
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = region[0].x * (canvas.width / baseWidth);
-                const startY = region[0].y * (canvas.height / baseHeight);
-                ctx.moveTo(startX, startY);
+                ctx.moveTo(region[0].x, region[0].y);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x * (canvas.width / baseWidth);
-                    const adjustedY = region[i].y * (canvas.height / baseHeight);
-                    ctx.lineTo(adjustedX, adjustedY);
+                    ctx.lineTo(region[i].x, region[i].y);
                 }
                 ctx.closePath();
-                ctx.strokeStyle = "lightblue";
-                ctx.lineWidth = 1; // 框框粗细固定
                 ctx.stroke();
             });
-
-            if (points.length > 1) {
-                ctx.beginPath();
-                const startX = points[0].x * (canvas.width / baseWidth);
-                const startY = points[0].y * (canvas.height / baseHeight);
-                ctx.moveTo(startX, startY);
-                for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x * (canvas.width / baseWidth);
-                    const adjustedY = points[i].y * (canvas.height / baseHeight);
-                    ctx.lineTo(adjustedX, adjustedY);
-                }
-                if (isClosed) {
-                    ctx.closePath();
-                    ctx.strokeStyle = "lightblue";
-                    ctx.lineWidth = 1; // 框框粗细固定
-                    ctx.stroke();
-                }
-            }
+            ctx.restore();
         }
 
         function getEventPosition(e) {
             const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-            if (e.type.includes("touch")) {
-                if (e.type === "touchend") {
-                    clientX = e.changedTouches[0].clientX;
-                    clientY = e.changedTouches[0].clientY;
-                } else {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                }
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            const rawX = clientX - rect.left;
-            const rawY = clientY - rect.top;
-            return { rawX, rawY };
+            const x = (e.clientX - rect.left - originX) / imageScale;
+            const y = (e.clientY - rect.top - originY) / imageScale;
+            return { x, y };
         }
 
-        function handleEnd(e) {
-            e.preventDefault();
-            const { rawX, rawY } = getEventPosition(e);
-            const duration = Date.now() - startTime;
+        function handleStart(e) {
+            if (isClosed) return;
+            const { x, y } = getEventPosition(e);
+            points.push({ x, y });
+            draw();
+        }
 
-            if (duration < clickTimeThreshold && !isClosed) {
-                points.push({ x: rawX, y: rawY });
+        function handleMove(e) {
+            if (!isDragging) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            originX = initialOriginX + dx;
+            originY = initialOriginY + dy;
+            draw();
+        }
+
+        function handleEnd() {
+            isDragging = false;
+        }
+
+        function handleZoomIn() {
+            if (imageScale < 3) {
+                imageScale *= 1.2;
                 draw();
-                console.log("Clicked at:", rawX, rawY);
+            }
+        }
+
+        function handleZoomOut() {
+            if (imageScale > 0.5) {
+                imageScale /= 1.2;
+                draw();
             }
         }
 
         canvas.addEventListener("mousedown", (e) => {
-            startTime = Date.now();
-            handleEnd(e);
-        });
-        canvas.addEventListener("mouseup", handleEnd);
-        canvas.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            startTime = Date.now();
-        });
-        canvas.addEventListener("touchend", (e) => {
-            e.preventDefault();
-            handleEnd(e);
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            initialOriginX = originX;
+            initialOriginY = originY;
         });
 
+        canvas.addEventListener("mousemove", handleMove);
+        canvas.addEventListener("mouseup", handleEnd);
+        canvas.addEventListener("mouseleave", handleEnd);
+        canvas.addEventListener("click", handleStart);
+
+        zoomInButton.addEventListener("click", handleZoomIn);
+        zoomOutButton.addEventListener("click", handleZoomOut);
+
         confirmButton.addEventListener("click", () => {
-            if (points.length >= 4) {
+            if (points.length >= 3) {
                 isClosed = true;
                 regions.push([...points]);
                 points = [];
                 isClosed = false;
                 draw();
-                console.log("Regions confirmed:", regions);
             }
+        });
+
+        resetButton.addEventListener("click", () => {
+            points = [];
+            isClosed = false;
+            draw();
         });
 
         undoButton.addEventListener("click", () => {
             if (points.length > 0 && !isClosed) {
                 points.pop();
                 draw();
-                console.log("Undo: Removed last point, remaining points:", points);
-            } else if (regions.length > 0) {
-                regions.pop();
-                draw();
-                console.log("Undo: Removed last region, remaining regions:", regions);
             }
         });
-
-        console.log("Image URL:", imageUrl);
     </script>
 </body>
 </html>
