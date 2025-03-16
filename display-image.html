@@ -37,16 +37,16 @@
         #buttons {
             margin-top: 5px; /* 5px最合适 */
             padding: 0 !important;
-            text-align: center;
+            text-align: left; /* 改为左侧对齐 */
             display: flex !important;
-            justify-content: center !important;
+            justify-content: flex-start !important; /* 改为左侧对齐 */
             align-items: center !important;
             gap: 20px !important;
             width: auto;
             min-width: 600px;
             min-height: 50px;
         }
-        #confirmButton, #clearButton, #undoButton {
+        #confirmButton, #undoButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -70,15 +70,18 @@
             #buttons {
                 position: fixed;
                 bottom: 30px; /* 30px最合适 */
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-                min-width: 90vw;
+                left: 0; /* 改为左侧对齐 */
+                transform: none; /* 移除 translateX，因为不再居中 */
+                width: 90vw;
+                padding: 0 !important;
+                text-align: left; /* 改为左侧对齐 */
+                display: flex !important;
+                justify-content: flex-start !important; /* 改为左侧对齐 */
+                align-items: center !important;
                 gap: 15px !important;
-                align-items: center;
                 min-height: 40px;
             }
-            #confirmButton, #clearButton, #undoButton {
+            #confirmButton, #undoButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -96,7 +99,6 @@
         </div>
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
-            <button id="clearButton">Clear</button>
             <button id="undoButton">Undo</button>
         </div>
     </div>
@@ -111,7 +113,6 @@
         let regions = [];
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
-        const clearButton = document.getElementById("clearButton"); // 改为 clearButton
         const undoButton = document.getElementById("undoButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
@@ -263,19 +264,15 @@
             }
         });
 
-        clearButton.addEventListener("click", () => {
-            if (regions.length > 0) {
-                regions.pop(); // 移除最后一个框框
-                draw();
-                console.log("Clear: Removed last region, remaining regions:", regions);
-            }
-        });
-
         undoButton.addEventListener("click", () => {
             if (points.length > 0 && !isClosed) {
                 points.pop();
                 draw();
                 console.log("Undo: Removed last point, remaining points:", points);
+            } else if (regions.length > 0) {
+                regions.pop();
+                draw();
+                console.log("Undo: Removed last region, remaining regions:", regions);
             }
         });
 
