@@ -47,7 +47,7 @@
             min-height: 50px;
             margin-left: 20px; /* 离左侧20px */
         }
-        #confirmButton, #undoButton {
+        #confirmButton, #undoButton, #saveButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -82,7 +82,7 @@
                 gap: 15px !important;
                 min-height: 40px;
             }
-            #confirmButton, #undoButton {
+            #confirmButton, #undoButton, #saveButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -101,6 +101,7 @@
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
             <button id="undoButton">Undo</button>
+            <button id="saveButton">Save</button>
         </div>
     </div>
     <script>
@@ -115,6 +116,7 @@
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
         const undoButton = document.getElementById("undoButton");
+        const saveButton = document.getElementById("saveButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const clickTimeThreshold = 300;
@@ -151,11 +153,11 @@
             baseWidth *= fitScale;
             baseHeight *= fitScale;
 
-            // 限制 canvas 尺寸不超过原始图片尺寸
+            // 设置 canvasContainer 显示适配尺寸，但 canvas 使用原图尺寸
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
-            canvas.width = Math.min(image.width * pixelRatio, image.width);
-            canvas.height = Math.min(image.height * pixelRatio, image.height);
+            canvas.width = image.width * pixelRatio;
+            canvas.height = image.height * pixelRatio;
             canvas.style.width = `${baseWidth}px`;
             canvas.style.height = `${baseHeight}px`;
             ctx.scale(pixelRatio, pixelRatio);
@@ -286,6 +288,15 @@
                 draw();
                 console.log("Undo: Removed last region, remaining regions:", regions);
             }
+        });
+
+        saveButton.addEventListener("click", () => {
+            const dataURL = canvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = dataURL;
+            link.download = "annotated_image.png";
+            link.click();
+            console.log("Image saved:", dataURL);
         });
 
         console.log("Image URL:", imageUrl);
