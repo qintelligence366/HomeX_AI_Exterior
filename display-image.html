@@ -37,7 +37,7 @@
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         let image = new Image();
-        let points = [];
+        let points = []; // 存储像素点的真实坐标
         let isClosed = false;
         let imageScale = 1;
         let originX = 0;
@@ -47,8 +47,6 @@
         let isDragging = false;
         let startX = 0;
         let startY = 0;
-        let initialOriginX = 0;
-        let initialOriginY = 0;
         let isMoving = false;
         let startTime = 0;
         const confirmButton = document.getElementById("confirmButton");
@@ -119,24 +117,18 @@
 
             if (!isMoving) {
                 const dotRadius = 3;
-                points.forEach(point => {
+                points.forEach((point, index) => {
                     ctx.beginPath();
-                    const adjustedX = point.x * imageScale + originX;
-                    const adjustedY = point.y * imageScale + originY;
-                    ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                    ctx.arc(point.x, point.y, dotRadius, 0, 2 * Math.PI);
                     ctx.fillStyle = "red";
                     ctx.fill();
                 });
 
                 regions.forEach(region => {
                     ctx.beginPath();
-                    const startX = region[0].x * imageScale + originX;
-                    const startY = region[0].y * imageScale + originY;
-                    ctx.moveTo(startX, startY);
+                    ctx.moveTo(region[0].x, region[0].y);
                     for (let i = 1; i < region.length; i++) {
-                        const adjustedX = region[i].x * imageScale + originX;
-                        const adjustedY = region[i].y * imageScale + originY;
-                        ctx.lineTo(adjustedX, adjustedY);
+                        ctx.lineTo(region[i].x, region[i].y);
                     }
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
@@ -145,13 +137,9 @@
 
                 if (points.length > 1) {
                     ctx.beginPath();
-                    const startX = points[0].x * imageScale + originX;
-                    const startY = points[0].y * imageScale + originY;
-                    ctx.moveTo(startX, startY);
+                    ctx.moveTo(points[0].x, points[0].y);
                     for (let i = 1; i < points.length; i++) {
-                        const adjustedX = points[i].x * imageScale + originX;
-                        const adjustedY = points[i].y * imageScale + originY;
-                        ctx.lineTo(adjustedX, adjustedY);
+                        ctx.lineTo(points[i].x, points[i].y);
                     }
                     if (isClosed) {
                         ctx.closePath();
@@ -188,8 +176,6 @@
             const { rawX, rawY } = getEventPosition(e);
             startX = rawX;
             startY = rawY;
-            initialOriginX = originX;
-            initialOriginY = originY;
             startTime = Date.now();
             isDragging = true;
             isMoving = true;
@@ -202,16 +188,14 @@
             const distance = Math.sqrt(Math.pow(rawX - startX, 2) + Math.pow(rawY - startY, 2));
 
             if (distance > dragThreshold) {
-                originX = initialOriginX + (rawX - startX);
-                originY = initialOriginY + (rawY - startY);
-
-                const scaledWidth = baseWidth * imageScale;
-                const scaledHeight = baseHeight * imageScale;
-                const maxX = Math.max(0, scaledWidth - baseWidth);
-                const maxY = Math.max(0, scaledHeight - baseHeight);
-                originX = Math.min(0, Math.max(originX, -maxX));
-                originY = Math.min(0, Math.max(originY, -maxY));
-
+                const dx = rawX - startX;
+                const dy = rawY - startY;
+                points.forEach(point => {
+                    point.x += dx;
+                    point.y += dy;
+                });
+                startX = rawX;
+                startY = rawY;
                 draw();
             }
         }
@@ -220,12 +204,10 @@
             if (!isDragging) return;
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
             const duration = Date.now() - startTime;
 
             if (duration < clickTimeThreshold && !isClosed) {
-                points.push({ x, y });
+                points.push({ x: rawX, y: rawY });
                 isMoving = false;
                 draw();
             } else {
@@ -270,7 +252,12 @@
         zoomInButton.addEventListener("click", () => {
             if (imageScale < 3) {
                 isMoving = true;
-                imageScale *= 1.2;
+                const scaleFactor = 1.2;
+                imageScale *= scaleFactor;
+                points.forEach(point => {
+                    point.x = point.x * scaleFactor;
+                    point.y = point.y * scaleFactor;
+                });
                 updateZoomButtons();
                 draw();
                 setTimeout(() => {
@@ -283,7 +270,12 @@
         zoomOutButton.addEventListener("click", () => {
             if (imageScale > 0.5) {
                 isMoving = true;
-                imageScale /= 1.2;
+                const scaleFactor = 1 / 1.2;
+                imageScale *= scaleFactor;
+                points.forEach(point => {
+                    point.x = point.x * scaleFactor;
+                    point.y = point.y * scaleFactor;
+                });
                 updateZoomButtons();
                 draw();
                 setTimeout(() => {
