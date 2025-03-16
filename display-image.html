@@ -129,7 +129,7 @@
             <button id="undoButton">Undo</button>
             <button id="zoomInButton">+</button>
             <button id="zoomOutButton">-</button>
-            <button id="saveButton">Save</button> <!-- 临时添加用于测试 -->
+            <button id="saveButton">Save</button>
         </div>
     </div>
     <script>
@@ -299,14 +299,14 @@
             offCtx.drawImage(image, 0, 0, image.width, image.height);
 
             // 按比例映射红点和框框到原图尺寸
-            const dotRatioX = image.width / baseWidth;
-            const dotRatioY = image.height / baseHeight;
+            const scaleX = image.width / (baseWidth * imageScale);
+            const scaleY = image.height / (baseHeight * imageScale);
 
             const dotRadius = 3;
             points.forEach(point => {
                 offCtx.beginPath();
-                const adjustedX = (point.x * imageScale + originX) * dotRatioX / imageScale;
-                const adjustedY = (point.y * imageScale + originY) * dotRatioY / imageScale;
+                const adjustedX = (point.x + originX / imageScale) * scaleX;
+                const adjustedY = (point.y + originY / imageScale) * scaleY;
                 offCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 offCtx.fillStyle = "red";
                 offCtx.fill();
@@ -314,12 +314,12 @@
 
             regions.forEach(region => {
                 offCtx.beginPath();
-                const startX = (region[0].x * imageScale + originX) * dotRatioX / imageScale;
-                const startY = (region[0].y * imageScale + originY) * dotRatioY / imageScale;
+                const startX = (region[0].x + originX / imageScale) * scaleX;
+                const startY = (region[0].y + originY / imageScale) * scaleY;
                 offCtx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = (region[i].x * imageScale + originX) * dotRatioX / imageScale;
-                    const adjustedY = (region[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    const adjustedX = (region[i].x + originX / imageScale) * scaleX;
+                    const adjustedY = (region[i].y + originY / imageScale) * scaleY;
                     offCtx.lineTo(adjustedX, adjustedY);
                 }
                 offCtx.closePath();
@@ -329,12 +329,12 @@
 
             if (points.length > 1) {
                 offCtx.beginPath();
-                const startX = (points[0].x * imageScale + originX) * dotRatioX / imageScale;
-                const startY = (points[0].y * imageScale + originY) * dotRatioY / imageScale;
+                const startX = (points[0].x + originX / imageScale) * scaleX;
+                const startY = (points[0].y + originY / imageScale) * scaleY;
                 offCtx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x * imageScale + originX) * dotRatioX / imageScale;
-                    const adjustedY = (points[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    const adjustedX = (points[i].x + originX / imageScale) * scaleX;
+                    const adjustedY = (points[i].y + originY / imageScale) * scaleY;
                     offCtx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -351,12 +351,12 @@
             if (regions.length > 0) {
                 const latestRegion = regions[regions.length - 1];
                 offCtx.beginPath();
-                const startX = (latestRegion[0].x * imageScale + originX) * dotRatioX / imageScale;
-                const startY = (latestRegion[0].y * imageScale + originY) * dotRatioY / imageScale;
+                const startX = (latestRegion[0].x + originX / imageScale) * scaleX;
+                const startY = (latestRegion[0].y + originY / imageScale) * scaleY;
                 offCtx.moveTo(startX, startY);
                 for (let i = 1; i < latestRegion.length; i++) {
-                    const adjustedX = (latestRegion[i].x * imageScale + originX) * dotRatioX / imageScale;
-                    const adjustedY = (latestRegion[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    const adjustedX = (latestRegion[i].x + originX / imageScale) * scaleX;
+                    const adjustedY = (latestRegion[i].y + originY / imageScale) * scaleY;
                     offCtx.lineTo(adjustedX, adjustedY);
                 }
                 offCtx.closePath();
