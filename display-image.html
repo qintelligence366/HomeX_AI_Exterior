@@ -428,33 +428,37 @@
                         return;
                     }
 
-                    // 绘制原图
+                    // 在原图 canvas 上绘制原图
                     highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
 
-                    // 计算小图到原图的缩放比例
+                    // 计算小图 → 原图的缩放比例
                     const scaleX = highResImage.width / baseWidth;
                     const scaleY = highResImage.height / baseHeight;
 
-                    // 映射小图上的红点到原图
+                    // 计算原图上的 originX 和 originY
+                    const translatedOriginX = (originX / baseWidth) * highResImage.width;
+                    const translatedOriginY = (originY / baseHeight) * highResImage.height;
+
+                    // 映射小图上的红点到原图，修复移动错位
                     const dotRadius = 5; // 调整点大小
                     points.forEach(point => {
                         highResCtx.beginPath();
-                        const adjustedX = (point.x * scaleX) + (originX * scaleX / imageScale);
-                        const adjustedY = (point.y * scaleY) + (originY * scaleY / imageScale);
+                        const adjustedX = (point.x * scaleX) - translatedOriginX;
+                        const adjustedY = (point.y * scaleY) - translatedOriginY;
                         highResCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                         highResCtx.fillStyle = "red";
                         highResCtx.fill();
                     });
 
-                    // 映射小图上的框框到原图
+                    // 映射小图上的框框到原图，修复移动错位
                     regions.forEach(region => {
                         highResCtx.beginPath();
-                        const startX = (region[0].x * scaleX) + (originX * scaleX / imageScale);
-                        const startY = (region[0].y * scaleY) + (originY * scaleY / imageScale);
+                        const startX = (region[0].x * scaleX) - translatedOriginX;
+                        const startY = (region[0].y * scaleY) - translatedOriginY;
                         highResCtx.moveTo(startX, startY);
                         for (let i = 1; i < region.length; i++) {
-                            const adjustedX = (region[i].x * scaleX) + (originX * scaleX / imageScale);
-                            const adjustedY = (region[i].y * scaleY) + (originY * scaleY / imageScale);
+                            const adjustedX = (region[i].x * scaleX) - translatedOriginX;
+                            const adjustedY = (region[i].y * scaleY) - translatedOriginY;
                             highResCtx.lineTo(adjustedX, adjustedY);
                         }
                         highResCtx.closePath();
