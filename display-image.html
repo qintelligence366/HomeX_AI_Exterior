@@ -37,14 +37,15 @@
         #buttons {
             margin-top: 5px; /* 5px最合适 */
             padding: 0 !important;
-            text-align: left; /* 改为左侧对齐 */
+            text-align: left; /* 左侧对齐 */
             display: flex !important;
-            justify-content: flex-start !important; /* 改为左侧对齐 */
+            justify-content: flex-start !important; /* 左侧对齐 */
             align-items: center !important;
             gap: 20px !important;
             width: auto;
             min-width: 600px;
             min-height: 50px;
+            margin-left: 20px; /* 离左侧20px */
         }
         #confirmButton, #undoButton {
             padding: 8px 16px;
@@ -70,16 +71,16 @@
             #buttons {
                 position: fixed;
                 bottom: 30px; /* 30px最合适 */
-                left: 20px; /* 改为离左侧20PX */
-                transform: none; /* 移除 translateX，因为不再居中 */
-                width: 90vw;
+                left: 20px; /* 离左侧20px */
+                width: auto;
                 padding: 0 !important;
-                text-align: left; /* 改为左侧对齐 */
+                text-align: left; /* 左侧对齐 */
                 display: flex !important;
-                justify-content: flex-start !important; /* 改为左侧对齐 */
+                justify-content: flex-start !important; /* 左侧对齐 */
                 align-items: center !important;
                 gap: 15px !important;
                 min-height: 40px;
+                transform: none; /* 移除居中转换 */
             }
             #confirmButton, #undoButton {
                 padding: 6px 12px;
@@ -251,6 +252,10 @@
             handleEnd(e);
         });
         canvas.addEventListener("mouseup", handleEnd);
+        canvas.addEventListener("touchstart", (e) => {
+            startTime = Date.now(); // 为touchstart初始化startTime
+            handleEnd(e.changedTouches[0]); // 处理touchstart作为点击
+        });
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
