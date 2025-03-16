@@ -46,7 +46,7 @@
             min-width: 600px;
             min-height: 50px;
         }
-        #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
+        #confirmButton, #resetButton, #undoButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -54,22 +54,6 @@
             line-height: 24px;
             cursor: pointer;
             box-sizing: border-box;
-        }
-        #zoomInButton, #zoomOutButton {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid #000;
-            background: #fff;
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-        #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc;
-            cursor: not-allowed;
         }
         @media (max-width: 768px) {
             .container {
@@ -94,18 +78,13 @@
                 align-items: center;
                 min-height: 40px;
             }
-            #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
+            #confirmButton, #resetButton, #undoButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
                 line-height: 18px;
                 width: auto;
                 box-sizing: border-box;
-            }
-            #zoomInButton, #zoomOutButton {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
             }
         }
     </style>
@@ -119,8 +98,6 @@
             <button id="confirmButton">Confirm</button>
             <button id="resetButton">Reset</button>
             <button id="undoButton">Undo</button>
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
         </div>
     </div>
     <script>
@@ -145,8 +122,6 @@
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
         const undoButton = document.getElementById("undoButton");
-        const zoomInButton = document.getElementById("zoomInButton");
-        const zoomOutButton = document.getElementById("zoomOutButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const dragThreshold = 5;
@@ -194,7 +169,6 @@
             canvas.style.height = `${baseHeight}px`;
             ctx.scale(pixelRatio, pixelRatio);
 
-            updateZoomButtons();
             draw();
         };
 
@@ -208,23 +182,6 @@
             return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
         }
 
-        function updateZoomButtons() {
-            if (imageScale >= 3) {
-                zoomInButton.classList.add("disabled");
-                zoomInButton.disabled = true;
-            } else {
-                zoomInButton.classList.remove("disabled");
-                zoomInButton.disabled = false;
-            }
-            if (imageScale <= 0.5) {
-                zoomOutButton.classList.add("disabled");
-                zoomOutButton.disabled = true;
-            } else {
-                zoomOutButton.classList.remove("disabled");
-                zoomOutButton.disabled = false;
-            }
-        }
-
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
             ctx.save();
@@ -236,8 +193,8 @@
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = (point.x * imageScale) + originX;
-                const adjustedY = (point.y * imageScale) + originY;
+                const adjustedX = point.x * imageScale + originX;
+                const adjustedY = point.y * imageScale + originY;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -245,12 +202,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = (region[0].x * imageScale) + originX;
-                const startY = (region[0].y * imageScale) + originY;
+                const startX = region[0].x * imageScale + originX;
+                const startY = region[0].y * imageScale + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = (region[i].x * imageScale) + originX;
-                    const adjustedY = (region[i].y * imageScale) + originY;
+                    const adjustedX = region[i].x * imageScale + originX;
+                    const adjustedY = region[i].y * imageScale + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -260,12 +217,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = (points[0].x * imageScale) + originX;
-                const startY = (points[0].y * imageScale) + originY;
+                const startX = points[0].x * imageScale + originX;
+                const startY = points[0].y * imageScale + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x * imageScale) + originX;
-                    const adjustedY = (points[i].y * imageScale) + originY;
+                    const adjustedX = points[i].x * imageScale + originX;
+                    const adjustedY = points[i].y * imageScale + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -384,24 +341,6 @@
                 points.pop();
                 draw();
                 console.log("Undo: Removed last point, remaining points:", points);
-            }
-        });
-
-        zoomInButton.addEventListener("click", () => {
-            if (imageScale < 3) {
-                imageScale *= 1.2;
-                console.log("Zoom In:", imageScale);
-                updateZoomButtons();
-                draw();
-            }
-        });
-
-        zoomOutButton.addEventListener("click", () => {
-            if (imageScale > 0.5) {
-                imageScale /= 1.2;
-                console.log("Zoom Out:", imageScale);
-                updateZoomButtons();
-                draw();
             }
         });
 
