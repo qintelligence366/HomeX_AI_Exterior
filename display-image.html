@@ -35,7 +35,7 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 2px; /* 从 5px 减小到 2px，让按钮更靠近图片 */
+            margin-top: 2px; /* 按钮靠近图片 */
             padding: 0 !important;
             text-align: center;
             display: flex !important;
@@ -85,7 +85,7 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 30px; /* 从 20px 调整到 30px，让按钮更靠近图片 */
+                bottom: 30px; /* 按钮上移 */
                 left: 50%;
                 transform: translateX(-50%);
                 width: auto;
@@ -236,8 +236,9 @@
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = point.x * imageScale + originX;
-                const adjustedY = point.y * imageScale + originY;
+                // 修正：移除 imageScale 缩放，直接用真实坐标加偏移
+                const adjustedX = point.x + originX;
+                const adjustedY = point.y + originY;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -245,12 +246,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = region[0].x * imageScale + originX;
-                const startY = region[0].y * imageScale + originY;
+                const startX = region[0].x + originX;
+                const startY = region[0].y + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x * imageScale + originX;
-                    const adjustedY = region[i].y * imageScale + originY;
+                    const adjustedX = region[i].x + originX;
+                    const adjustedY = region[i].y + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -260,12 +261,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = points[0].x * imageScale + originX;
-                const startY = points[0].y * imageScale + originY;
+                const startX = points[0].x + originX;
+                const startY = points[0].y + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x * imageScale + originX;
-                    const adjustedY = points[i].y * imageScale + originY;
+                    const adjustedX = points[i].x + originX;
+                    const adjustedY = points[i].y + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
