@@ -138,6 +138,7 @@
             const canvas = document.getElementById("canvas");
             const ctx = canvas.getContext("2d");
             let image = new Image();
+            image.crossOrigin = "anonymous"; // 允许跨域加载图片
             let points = [];
             let isClosed = false;
             let imageScale = 1;
@@ -294,88 +295,70 @@
                 }
             }
 
-            // 绘制到 offscreenCanvas，用于保存大图
+            // 绘制到 highResCanvas，用于保存原图尺寸
             function drawOffscreenCanvas() {
-                const offscreenCanvas = document.createElement("canvas");
-                offscreenCanvas.width = image.width;
-                offscreenCanvas.height = image.height;
-                const offCtx = offscreenCanvas.getContext("2d");
-
-                if (!offCtx) {
-                    console.error("Failed to get offscreenCanvas context");
+                if (!image.complete || image.naturalWidth === 0) {
+                    console.error("Image not loaded yet!");
                     return null;
                 }
 
-                // 绘制原图
-                offCtx.drawImage(image, 0, 0, image.width, image.height);
+                const highResImage = new Image();
+                highResImage.crossOrigin = "anonymous"; // 允许跨域加载
+                highResImage.src = imageUrl;
 
-                // 按比例映射红点和框框到原图尺寸
-                const scaleX = image.width / (baseWidth * imageScale);
-                const scaleY = image.height / (baseHeight * imageScale);
+                highResImage.onload = () => {
+                    const highResCanvas = document.createElement("canvas");
+                    highResCanvas.width = highResImage.width;
+                    highResCanvas.height = highResImage.height;
+                    const highResCtx = highResCanvas.getContext("2d");
 
-                const dotRadius = 3;
-                points.forEach(point => {
-                    offCtx.beginPath();
-                    const adjustedX = (point.x + originX / imageScale) * scaleX;
-                    const adjustedY = (point.y + originY / imageScale) * scaleY;
-                    offCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                    offCtx.fillStyle = "red";
-                    offCtx.fill();
-                });
-
-                regions.forEach(region => {
-                    offCtx.beginPath();
-                    const startX = (region[0].x + originX / imageScale) * scaleX;
-                    const startY = (region[0].y + originY / imageScale) * scaleY;
-                    offCtx.moveTo(startX, startY);
-                    for (let i = 1; i < region.length; i++) {
-                        const adjustedX = (region[i].x + originX / imageScale) * scaleX;
-                        const adjustedY = (region[i].y + originY / imageScale) * scaleY;
-                        offCtx.lineTo(adjustedX, adjustedY);
+                    if (!highResCtx) {
+                        console.error("Failed to get highResCanvas context");
+                        return null;
                     }
-                    offCtx.closePath();
-                    offCtx.strokeStyle = "lightblue";
-                    offCtx.stroke();
-                });
 
-                if (points.length > 1) {
-                    offCtx.beginPath();
-                    const startX = (points[0].x + originX / imageScale) * scaleX;
-                    const startY = (points[0].y + originY / imageScale) * scaleY;
-                    offCtx.moveTo(startX, startY);
-                    for (let i = 1; i < points.length; i++) {
-                        const adjustedX = (points[i].x + originX / imageScale) * scaleX;
-                        const adjustedY = (points[i].y + originY / imageScale) * scaleY;
-                        offCtx.lineTo(adjustedX, adjustedY);
-                    }
-                    if (isClosed) {
-                        offCtx.closePath();
-                        offCtx.strokeStyle = "lightblue";
-                        offCtx.stroke();
-                    } else {
-                        offCtx.strokeStyle = "lightblue";
-                        offCtx.stroke();
-                    }
-                }
+                    // 绘制原图
+                    highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
 
-                // 示例替换操作：填充框框区域（实际替换需根据需求调整）
-                if (regions.length > 0) {
-                    const latestRegion = regions[regions.length - 1];
-                    offCtx.beginPath();
-                    const startX = (latestRegion[0].x + originX / imageScale) * scaleX;
-                    const startY = (latestRegion[0].y + originY / imageScale) * scaleY;
-                    offCtx.moveTo(startX, startY);
-                    for (let i = 1; i < latestRegion.length; i++) {
-                        const adjustedX = (latestRegion[i].x + originX / imageScale) * scaleX;
-                        const adjustedY = (latestRegion[i].y + originY / imageScale) * scaleY;
-                        offCtx.lineTo(adjustedX, adjustedY);
-                    }
-                    offCtx.closePath();
-                    offCtx.fillStyle = "rgba(255, 0, 0, 0.5)"; // 示例填充红色半透明
-                    offCtx.fill();
-                }
+                    // 计算小图到原图的缩放比例
+                    const scaleX = highResImage.width / (baseWidth * imageScale);
+                    const scaleY = highResImage.height / (baseHeight * imageScale);
 
-                return offscreenCanvas;
+                    // 映射小图上的红点到原图
+                    const dotRadius = 5; // 调整点大小
+                    points.forEach(point => {
+                        highResCtx.beginPath();
+                        const adjustedX = (point.x + originX / imageScale) * scaleX;
+                        const adjustedY = (point.y + originY / imageScale) * scaleY;
+                        highResCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                        highResCtx.fillStyle = "red";
+                        highResCtx.fill();
+                    });
+
+                    // 映射小图上的框框到原图
+                    regions.forEach(region => {
+                        highResCtx.beginPath();
+                        const startX = (region[0].x + originX / imageScale) * scaleX;
+                        const startY = (region[0].y + originY / imageScale) * scaleY;
+                        highResCtx.moveTo(startX, startY);
+                        for (let i = 1; i < region.length; i++) {
+                            const adjustedX = (region[i].x + originX / imageScale) * scaleX;
+                            const adjustedY = (region[i].y + originY / imageScale) * scaleY;
+                            highResCtx.lineTo(adjustedX, adjustedY);
+                        }
+                        highResCtx.closePath();
+                        highResCtx.strokeStyle = "lightblue";
+                        highResCtx.stroke();
+                    });
+
+                    return highResCanvas;
+                };
+
+                highResImage.onerror = () => {
+                    console.error("Failed to load high-resolution image:", imageUrl);
+                    return null;
+                };
+                return null; // 初始返回 null，等待 onload
             }
 
             function getEventPosition(e) {
@@ -493,21 +476,26 @@
                 }
             });
 
-            // 保存大图
+            // 保存高分辨率图片
             saveButton.addEventListener("click", () => {
-                const offscreenCanvas = drawOffscreenCanvas();
-                if (offscreenCanvas) {
-                    const dataURL = offscreenCanvas.toDataURL("image/png");
-                    const link = document.createElement("a");
-                    link.href = dataURL;
-                    link.download = "annotated_image.png";
-                    document.body.appendChild(link); // 确保 DOM 中添加链接
-                    link.click();
-                    document.body.removeChild(link); // 清理
-                    console.log("Image saved:", dataURL);
-                } else {
-                    console.error("Failed to create offscreenCanvas");
+                const highResCanvas = drawOffscreenCanvas();
+                if (!highResCanvas || !highResCanvas.getContext) {
+                    console.error("Failed to create or get context from highResCanvas");
+                    return;
                 }
+
+                const dataURL = highResCanvas.toDataURL("image/png");
+                const link = document.createElement("a");
+                link.href = dataURL;
+                link.download = "annotated_image.png";
+
+                document.body.appendChild(link);
+                setTimeout(() => {
+                    link.click();
+                    document.body.removeChild(link);
+                }, 100);
+
+                console.log("✅ Saved high-resolution image.");
             });
 
             console.log("Image URL:", imageUrl);
