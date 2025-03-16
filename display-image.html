@@ -151,14 +151,21 @@
             baseWidth *= fitScale;
             baseHeight *= fitScale;
 
-            // 设置 canvasContainer 显示适配尺寸，但 canvas 使用原图尺寸
+            // 强制宽度为 4000，像素高度根据比例调整
+            let canvasWidth = 4000;
+            let canvasHeight = Math.round(4000 / imageRatio);
+            // 设置 canvasContainer 显示适配尺寸
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
-            canvas.width = image.width * pixelRatio;
-            canvas.height = image.height * pixelRatio;
+            canvas.width = canvasWidth;
+            canvas.height = canvasHeight;
             canvas.style.width = `${baseWidth}px`;
             canvas.style.height = `${baseHeight}px`;
             ctx.scale(pixelRatio, pixelRatio);
+
+            // 提高下载质量
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
 
             draw();
         };
@@ -171,12 +178,12 @@
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-            ctx.drawImage(image, 0, 0, image.width, image.height);
+            ctx.drawImage(image, 0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
 
-            const dotRatioX = image.width / baseWidth;
-            const dotRatioY = image.height / baseHeight;
+            const dotRatioX = canvas.width / baseWidth;
+            const dotRatioY = canvas.height / baseHeight;
 
-            const dotRadius = 3;
+            const dotRadius = 3; // 红点大小固定
             points.forEach(point => {
                 ctx.beginPath();
                 const adjustedX = point.x * dotRatioX;
@@ -198,6 +205,7 @@
                 }
                 ctx.closePath();
                 ctx.strokeStyle = "lightblue";
+                ctx.lineWidth = 1; // 框框粗细固定
                 ctx.stroke();
             });
 
@@ -214,6 +222,7 @@
                 if (isClosed) {
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
+                    ctx.lineWidth = 1; // 框框粗细固定
                     ctx.stroke();
                 }
             }
@@ -286,15 +295,6 @@
                 draw();
                 console.log("Undo: Removed last region, remaining regions:", regions);
             }
-        });
-
-        saveButton.addEventListener("click", () => {
-            const dataURL = canvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.href = dataURL;
-            link.download = "annotated_image.png";
-            link.click();
-            console.log("Image saved:", dataURL);
         });
 
         console.log("Image URL:", imageUrl);
