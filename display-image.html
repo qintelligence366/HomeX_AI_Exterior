@@ -265,6 +265,7 @@
                 ctx.stroke();
             });
 
+            // 实时连接线段：点击第二个点时开始连接
             if (points.length > 1) {
                 ctx.beginPath();
                 const startX = (points[0].x * imageScale) + originX;
@@ -277,6 +278,10 @@
                 }
                 if (isClosed) {
                     ctx.closePath();
+                    ctx.strokeStyle = "lightblue";
+                    ctx.stroke();
+                } else {
+                    // 绘制未闭合的线段，颜色与框框相同
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
                 }
