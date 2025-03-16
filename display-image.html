@@ -46,7 +46,7 @@
             min-width: 600px;
             min-height: 50px;
         }
-        #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
+        #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -94,7 +94,7 @@
                 align-items: center;
                 min-height: 40px;
             }
-            #confirmButton, #resetButton, #zoomInButton, #zoomOutButton {
+            #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
@@ -118,6 +118,7 @@
         <div id="buttons">
             <button id="confirmButton">Confirm</button>
             <button id="resetButton">Reset</button>
+            <button id="undoButton">Undo</button>
             <button id="zoomInButton">+</button>
             <button id="zoomOutButton">-</button>
         </div>
@@ -143,6 +144,7 @@
         let isDraggingIntent = false;
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
+        const undoButton = document.getElementById("undoButton"); // 新增 Undo 按钮
         const zoomInButton = document.getElementById("zoomInButton");
         const zoomOutButton = document.getElementById("zoomOutButton");
         const buttonsDiv = document.getElementById("buttons");
@@ -319,8 +321,8 @@
 
             if (distance > dragThreshold) {
                 isDraggingIntent = true;
-                originX = initialOriginX + (rawX - startX) * imageScale;
-                originY = initialOriginY + (rawY - startY) * imageScale;
+                originX = initialOriginX + (rawX - startX);
+                originY = initialOriginY + (rawY - startY);
 
                 const scaledWidth = baseWidth * imageScale;
                 const scaledHeight = baseHeight * imageScale;
@@ -361,7 +363,7 @@
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
-            if (points.length >= 3) { // 至少 3 个点即可形成框框
+            if (points.length >= 3) {
                 isClosed = true;
                 regions.push([...points]);
                 points = [];
@@ -375,6 +377,15 @@
             points = [];
             isClosed = false;
             draw();
+        });
+
+        // 新增 Undo 按钮功能
+        undoButton.addEventListener("click", () => {
+            if (points.length > 0 && !isClosed) {
+                points.pop(); // 移除最后一个点
+                draw(); // 重绘画布
+                console.log("Undo: Removed last point, remaining points:", points);
+            }
         });
 
         zoomInButton.addEventListener("click", () => {
