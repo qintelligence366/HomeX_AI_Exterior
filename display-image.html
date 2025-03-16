@@ -35,7 +35,7 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 2px; /* 从 5px 减小到 2px，让按钮更靠近图片 */
+            margin-top: 0px;
             padding: 0 !important;
             text-align: center;
             display: flex !important;
@@ -85,7 +85,7 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 30px; 
+                bottom: 5px; /* 从 30px 减小到 5px，按钮更贴近图片 */
                 left: 50%;
                 transform: translateX(-50%);
                 width: auto;
@@ -236,8 +236,8 @@
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = point.x * imageScale + originX;
-                const adjustedY = point.y * imageScale + originY;
+                const adjustedX = (point.x + originX) * imageScale;
+                const adjustedY = (point.y + originY) * imageScale;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -245,12 +245,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = region[0].x * imageScale + originX;
-                const startY = region[0].y * imageScale + originY;
+                const startX = (region[0].x + originX) * imageScale;
+                const startY = (region[0].y + originY) * imageScale;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x * imageScale + originX;
-                    const adjustedY = region[i].y * imageScale + originY;
+                    const adjustedX = (region[i].x + originX) * imageScale;
+                    const adjustedY = (region[i].y + originY) * imageScale;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -260,12 +260,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = points[0].x * imageScale + originX;
-                const startY = points[0].y * imageScale + originY;
+                const startX = (points[0].x + originX) * imageScale;
+                const startY = (points[0].y + originY) * imageScale;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x * imageScale + originX;
-                    const adjustedY = points[i].y * imageScale + originY;
+                    const adjustedX = (points[i].x + originX) * imageScale;
+                    const adjustedY = (points[i].y + originY) * imageScale;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -340,8 +340,8 @@
 
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
+            const x = (rawX / imageScale) - originX;
+            const y = (rawY / imageScale) - originY;
             const duration = Date.now() - startTime;
 
             if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
