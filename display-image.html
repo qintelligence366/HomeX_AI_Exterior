@@ -188,12 +188,8 @@
             const distance = Math.sqrt(Math.pow(rawX - startX, 2) + Math.pow(rawY - startY, 2));
 
             if (distance > dragThreshold) {
-                const dx = rawX - startX;
-                const dy = rawY - startY;
-                points.forEach(point => {
-                    point.x += dx;
-                    point.y += dy;
-                });
+                originX += (rawX - startX);
+                originY += (rawY - startY);
                 startX = rawX;
                 startY = rawY;
                 draw();
@@ -258,6 +254,8 @@
                     point.x = point.x * scaleFactor;
                     point.y = point.y * scaleFactor;
                 });
+                originX *= scaleFactor;
+                originY *= scaleFactor;
                 updateZoomButtons();
                 draw();
                 setTimeout(() => {
@@ -276,6 +274,8 @@
                     point.x = point.x * scaleFactor;
                     point.y = point.y * scaleFactor;
                 });
+                originX *= scaleFactor;
+                originY *= scaleFactor;
                 updateZoomButtons();
                 draw();
                 setTimeout(() => {
