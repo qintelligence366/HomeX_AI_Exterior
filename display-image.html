@@ -213,29 +213,6 @@
 
         zoomInButton.addEventListener("click", handleZoomIn);
         zoomOutButton.addEventListener("click", handleZoomOut);
-
-        confirmButton.addEventListener("click", () => {
-            if (points.length >= 3) {
-                isClosed = true;
-                regions.push([...points]);
-                points = [];
-                isClosed = false;
-                draw();
-            }
-        });
-
-        resetButton.addEventListener("click", () => {
-            points = [];
-            isClosed = false;
-            draw();
-        });
-
-        undoButton.addEventListener("click", () => {
-            if (points.length > 0 && !isClosed) {
-                points.pop();
-                draw();
-            }
-        });
     </script>
 </body>
 </html>
