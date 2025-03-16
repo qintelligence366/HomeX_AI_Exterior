@@ -6,6 +6,8 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
         * {
             box-sizing: border-box;
@@ -15,16 +17,16 @@
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
+            height: 100%;
+            margin: 0;
         }
         #canvasContainer {
             position: relative;
-            width: 600px;
-            height: 450px;
+            width: 100%;
+            height: auto;
             max-width: 600px;
             max-height: 450px;
-            overflow: hidden;
+            overflow: auto; /* 允许滚动以显示完整图片 */
             border: 1px solid black;
         }
         #canvas {
@@ -35,55 +37,27 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 0px; /* 移除间距，按钮贴近图片 */
+            position: fixed;
+            bottom: 0px; /* 按钮紧贴图片底部 */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90vw;
             padding: 0 !important;
             text-align: center;
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            gap: 20px !important;
-            width: auto;
-            min-width: 600px;
+            gap: 15px !important;
+            min-height: 40px;
         }
         #confirmButton, #resetButton, #undoButton, #saveButton {
-            padding: 8px 16px;
+            padding: 6px 12px;
             margin: 0;
-            font-size: 14px;
-            height: 40px;
-            line-height: 24px;
+            font-size: 12px;
+            height: 30px;
+            line-height: 18px;
             cursor: pointer;
             box-sizing: border-box;
-        }
-        @media (max-width: 768px) {
-            .container {
-                max-width: 90vw;
-            }
-            #canvasContainer {
-                width: 90vw;
-                padding-top: 75%;
-                max-width: 90vw;
-                max-height: calc(90vw * 0.75);
-                overflow: hidden;
-                border: 1px solid black;
-            }
-            #buttons {
-                position: fixed;
-                bottom: 5px; /* 减小到 5px，按钮贴近图片 */
-                left: 50%;
-                transform: translateX(-50%);
-                width: auto;
-                min-width: 90vw;
-                gap: 15px !important;
-                align-items: center;
-            }
-            #confirmButton, #resetButton, #undoButton, #saveButton {
-                padding: 6px 12px;
-                font-size: 12px;
-                height: 30px;
-                line-height: 18px;
-                width: auto;
-                box-sizing: border-box;
-            }
         }
     </style>
 </head>
@@ -112,7 +86,7 @@
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
         const undoButton = document.getElementById("undoButton");
-        const saveButton = document.getElementById("saveButton"); // 新增保存按钮
+        const saveButton = document.getElementById("saveButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const clickTimeThreshold = 300;
@@ -127,11 +101,21 @@
         image.src = imageUrl;
 
         image.onload = () => {
-            baseWidth = image.width; // 使用原图宽度
-            baseHeight = image.height; // 使用原图高度
+            baseWidth = image.width;
+            baseHeight = image.height;
 
-            canvasContainer.style.width = `${baseWidth}px`;
-            canvasContainer.style.height = `${baseHeight}px`;
+            // 限制最大尺寸，避免溢出
+            const maxWidth = 600;
+            const maxHeight = 450;
+            const widthRatio = maxWidth / baseWidth;
+            const heightRatio = maxHeight / baseHeight;
+            const scale = Math.min(widthRatio, heightRatio, 1);
+
+            const displayWidth = baseWidth * scale;
+            const displayHeight = baseHeight * scale;
+
+            canvasContainer.style.width = `${displayWidth}px`;
+            canvasContainer.style.height = `${displayHeight}px`;
             canvas.width = baseWidth * pixelRatio;
             canvas.height = baseHeight * pixelRatio;
             canvas.style.width = `${baseWidth}px`;
