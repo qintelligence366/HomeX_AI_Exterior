@@ -115,37 +115,38 @@
             ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
             ctx.restore();
 
-            if (!isMoving) {
-                const dotRadius = 3;
-                points.forEach((point, index) => {
-                    ctx.beginPath();
-                    ctx.arc(point.x, point.y, dotRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = "red";
-                    ctx.fill();
-                });
+            const dotRadius = 3;
+            points.forEach((point, index) => {
+                let displayX = point.x;
+                let displayY = point.y;
+                if (!isClosed && isMoving) return; // 框框未形成前，移动或缩放时红点消失
+                ctx.beginPath();
+                ctx.arc(displayX, displayY, dotRadius, 0, 2 * Math.PI);
+                ctx.fillStyle = "red";
+                ctx.fill();
+            });
 
-                regions.forEach(region => {
-                    ctx.beginPath();
-                    ctx.moveTo(region[0].x, region[0].y);
-                    for (let i = 1; i < region.length; i++) {
-                        ctx.lineTo(region[i].x, region[i].y);
-                    }
+            regions.forEach(region => {
+                ctx.beginPath();
+                ctx.moveTo(region[0].x, region[0].y);
+                for (let i = 1; i < region.length; i++) {
+                    ctx.lineTo(region[i].x, region[i].y);
+                }
+                ctx.closePath();
+                ctx.strokeStyle = "lightblue";
+                ctx.stroke();
+            });
+
+            if (points.length > 1 && !isMoving) {
+                ctx.beginPath();
+                ctx.moveTo(points[0].x, points[0].y);
+                for (let i = 1; i < points.length; i++) {
+                    ctx.lineTo(points[i].x, points[i].y);
+                }
+                if (isClosed) {
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
-                });
-
-                if (points.length > 1) {
-                    ctx.beginPath();
-                    ctx.moveTo(points[0].x, points[0].y);
-                    for (let i = 1; i < points.length; i++) {
-                        ctx.lineTo(points[i].x, points[i].y);
-                    }
-                    if (isClosed) {
-                        ctx.closePath();
-                        ctx.strokeStyle = "lightblue";
-                        ctx.stroke();
-                    }
                 }
             }
         }
@@ -192,6 +193,10 @@
                 originY += (rawY - startY);
                 startX = rawX;
                 startY = rawY;
+                points.forEach(point => {
+                    point.x += (rawX - startX);
+                    point.y += (rawY - startY);
+                });
                 draw();
             }
         }
@@ -235,6 +240,9 @@
         resetButton.addEventListener("click", () => {
             points = [];
             isClosed = false;
+            originX = 0;
+            originY = 0;
+            imageScale = 1;
             draw();
         });
 
