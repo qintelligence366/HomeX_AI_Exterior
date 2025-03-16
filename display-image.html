@@ -35,7 +35,7 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 2px; /* 按钮靠近图片 */
+            margin-top: 2px;
             padding: 0 !important;
             text-align: center;
             display: flex !important;
@@ -46,7 +46,7 @@
             min-width: 600px;
             min-height: 50px;
         }
-        #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
+        #confirmButton, #resetButton, #undoButton {
             padding: 8px 16px;
             margin: 0;
             font-size: 14px;
@@ -54,22 +54,6 @@
             line-height: 24px;
             cursor: pointer;
             box-sizing: border-box;
-        }
-        #zoomInButton, #zoomOutButton {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 1px solid #000;
-            background: #fff;
-            font-size: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-        }
-        #zoomInButton.disabled, #zoomOutButton.disabled {
-            background: #ccc;
-            cursor: not-allowed;
         }
         @media (max-width: 768px) {
             .container {
@@ -85,7 +69,7 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 30px; /* 按钮上移 */
+                bottom: 30px;
                 left: 50%;
                 transform: translateX(-50%);
                 width: auto;
@@ -94,18 +78,13 @@
                 align-items: center;
                 min-height: 40px;
             }
-            #confirmButton, #resetButton, #undoButton, #zoomInButton, #zoomOutButton {
+            #confirmButton, #resetButton, #undoButton {
                 padding: 6px 12px;
                 font-size: 12px;
                 height: 30px;
                 line-height: 18px;
                 width: auto;
                 box-sizing: border-box;
-            }
-            #zoomInButton, #zoomOutButton {
-                width: 30px;
-                height: 30px;
-                font-size: 16px;
             }
         }
     </style>
@@ -119,8 +98,6 @@
             <button id="confirmButton">Confirm</button>
             <button id="resetButton">Reset</button>
             <button id="undoButton">Undo</button>
-            <button id="zoomInButton">+</button>
-            <button id="zoomOutButton">-</button>
         </div>
     </div>
     <script>
@@ -130,26 +107,14 @@
         let image = new Image();
         let points = [];
         let isClosed = false;
-        let imageScale = 1;
-        let originX = 0;
-        let originY = 0;
         let baseWidth, baseHeight;
         let regions = [];
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let initialOriginX = 0;
-        let initialOriginY = 0;
         let startTime = 0;
-        let isDraggingIntent = false;
         const confirmButton = document.getElementById("confirmButton");
         const resetButton = document.getElementById("resetButton");
         const undoButton = document.getElementById("undoButton");
-        const zoomInButton = document.getElementById("zoomInButton");
-        const zoomOutButton = document.getElementById("zoomOutButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
-        const dragThreshold = 5;
         const clickTimeThreshold = 300;
 
         const params = new URLSearchParams(window.location.search);
@@ -184,8 +149,6 @@
             baseWidth *= fitScale;
             baseHeight *= fitScale;
 
-            imageScale = 1;
-
             canvasContainer.style.width = `${baseWidth}px`;
             canvasContainer.style.height = `${baseHeight}px`;
             canvas.width = baseWidth * pixelRatio;
@@ -194,7 +157,6 @@
             canvas.style.height = `${baseHeight}px`;
             ctx.scale(pixelRatio, pixelRatio);
 
-            updateZoomButtons();
             draw();
         };
 
@@ -204,41 +166,15 @@
             draw();
         };
 
-        function getDistance(p1, p2) {
-            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-        }
-
-        function updateZoomButtons() {
-            if (imageScale >= 3) {
-                zoomInButton.classList.add("disabled");
-                zoomInButton.disabled = true;
-            } else {
-                zoomInButton.classList.remove("disabled");
-                zoomInButton.disabled = false;
-            }
-            if (imageScale <= 0.5) {
-                zoomOutButton.classList.add("disabled");
-                zoomOutButton.disabled = true;
-            } else {
-                zoomOutButton.classList.remove("disabled");
-                zoomOutButton.disabled = false;
-            }
-        }
-
         function draw() {
             ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-            ctx.save();
-            ctx.scale(imageScale, imageScale);
-            ctx.translate(originX / pixelRatio, originY / pixelRatio);
             ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
-            ctx.restore();
 
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                // 修正：移除 imageScale 缩放，直接用真实坐标加偏移
-                const adjustedX = point.x + originX;
-                const adjustedY = point.y + originY;
+                const adjustedX = point.x;
+                const adjustedY = point.y;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -246,12 +182,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = region[0].x + originX;
-                const startY = region[0].y + originY;
+                const startX = region[0].x;
+                const startY = region[0].y;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = region[i].x + originX;
-                    const adjustedY = region[i].y + originY;
+                    const adjustedX = region[i].x;
+                    const adjustedY = region[i].y;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -261,12 +197,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = points[0].x + originX;
-                const startY = points[0].y + originY;
+                const startX = points[0].x;
+                const startY = points[0].y;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = points[i].x + originX;
-                    const adjustedY = points[i].y + originY;
+                    const adjustedX = points[i].x;
+                    const adjustedY = points[i].y;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -297,70 +233,23 @@
             return { rawX, rawY };
         }
 
-        function handleStart(e) {
-            if (isClosed) return;
-
-            e.preventDefault();
-            const { rawX, rawY } = getEventPosition(e);
-            startX = rawX;
-            startY = rawY;
-            initialOriginX = originX;
-            initialOriginY = originY;
-            startTime = Date.now();
-            isDraggingIntent = false;
-            isDragging = true;
-        }
-
-        function handleMove(e) {
-            if (!isDragging) return;
-
-            e.preventDefault();
-            const { rawX, rawY } = getEventPosition(e);
-            const distance = Math.sqrt(
-                Math.pow(rawX - startX, 2) + Math.pow(rawY - startY, 2)
-            );
-
-            if (distance > dragThreshold) {
-                isDraggingIntent = true;
-                originX = initialOriginX + (rawX - startX);
-                originY = initialOriginY + (rawY - startY);
-
-                const scaledWidth = baseWidth * imageScale;
-                const scaledHeight = baseHeight * imageScale;
-                const maxX = Math.max(0, scaledWidth - baseWidth);
-                const maxY = Math.max(0, scaledHeight - baseHeight);
-                originX = Math.min(0, Math.max(originX, -maxX));
-                originY = Math.min(0, Math.max(originY, -maxY));
-
-                draw();
-            }
-        }
-
         function handleEnd(e) {
-            if (!isDragging) return;
-
             e.preventDefault();
             const { rawX, rawY } = getEventPosition(e);
-            const x = (rawX - originX) / imageScale;
-            const y = (rawY - originY) / imageScale;
             const duration = Date.now() - startTime;
 
-            if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
-                points.push({ x, y });
+            if (duration < clickTimeThreshold && !isClosed) {
+                points.push({ x: rawX, y: rawY });
                 draw();
-                console.log("Clicked at (adjusted):", x, y);
+                console.log("Clicked at:", rawX, rawY);
             }
-
-            isDragging = false;
         }
 
-        canvas.addEventListener("mousedown", handleStart);
-        canvas.addEventListener("mousemove", handleMove);
+        canvas.addEventListener("mousedown", (e) => {
+            startTime = Date.now();
+            handleEnd(e);
+        });
         canvas.addEventListener("mouseup", handleEnd);
-        canvas.addEventListener("mouseleave", handleEnd);
-
-        canvas.addEventListener("touchstart", handleStart);
-        canvas.addEventListener("touchmove", handleMove);
         canvas.addEventListener("touchend", handleEnd);
 
         confirmButton.addEventListener("click", () => {
@@ -385,24 +274,6 @@
                 points.pop();
                 draw();
                 console.log("Undo: Removed last point, remaining points:", points);
-            }
-        });
-
-        zoomInButton.addEventListener("click", () => {
-            if (imageScale < 3) {
-                imageScale *= 1.2;
-                console.log("Zoom In:", imageScale);
-                updateZoomButtons();
-                draw();
-            }
-        });
-
-        zoomOutButton.addEventListener("click", () => {
-            if (imageScale > 0.5) {
-                imageScale /= 1.2;
-                console.log("Zoom Out:", imageScale);
-                updateZoomButtons();
-                draw();
             }
         });
 
