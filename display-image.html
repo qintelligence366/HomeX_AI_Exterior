@@ -133,367 +133,385 @@
         </div>
     </div>
     <script>
-        const canvasContainer = document.getElementById("canvasContainer");
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-        let image = new Image();
-        let points = [];
-        let isClosed = false;
-        let imageScale = 1;
-        let originX = 0;
-        let originY = 0;
-        let baseWidth, baseHeight;
-        let regions = [];
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-        let initialOriginX = 0;
-        let initialOriginY = 0;
-        let startTime = 0;
-        let isDraggingIntent = false;
-        const confirmButton = document.getElementById("confirmButton");
-        const undoButton = document.getElementById("undoButton");
-        const zoomInButton = document.getElementById("zoomInButton");
-        const zoomOutButton = document.getElementById("zoomOutButton");
-        const saveButton = document.getElementById("saveButton");
-        const buttonsDiv = document.getElementById("buttons");
-        const pixelRatio = window.devicePixelRatio || 1;
-        const dragThreshold = 5;
-        const clickTimeThreshold = 300;
+        window.onload = function () {
+            const canvasContainer = document.getElementById("canvasContainer");
+            const canvas = document.getElementById("canvas");
+            const ctx = canvas.getContext("2d");
+            let image = new Image();
+            let points = [];
+            let isClosed = false;
+            let imageScale = 1;
+            let originX = 0;
+            let originY = 0;
+            let baseWidth, baseHeight;
+            let regions = [];
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let initialOriginX = 0;
+            let initialOriginY = 0;
+            let startTime = 0;
+            let isDraggingIntent = false;
+            const confirmButton = document.getElementById("confirmButton");
+            const undoButton = document.getElementById("undoButton");
+            const zoomInButton = document.getElementById("zoomInButton");
+            const zoomOutButton = document.getElementById("zoomOutButton");
+            const saveButton = document.getElementById("saveButton");
+            const buttonsDiv = document.getElementById("buttons");
+            const pixelRatio = window.devicePixelRatio || 1;
+            const dragThreshold = 5;
+            const clickTimeThreshold = 300;
 
-        const params = new URLSearchParams(window.location.search);
-        let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
-        if (imageUrl && !imageUrl.includes("via.placeholder")) {
-            if (!imageUrl.includes("auto=format")) {
-                imageUrl += "?auto=format&q=20";
-            }
-        }
-        image.src = imageUrl;
-
-        image.onload = () => {
-            let maxWidth = 600;
-            let maxHeight = 450;
-            const imageRatio = image.width / image.height;
-            const canvasRatio = maxWidth / maxHeight;
-
-            if (window.innerWidth <= 768) {
-                maxWidth = window.innerWidth * 0.9;
-                maxHeight = maxWidth * 0.75;
+            if (!saveButton) {
+                console.error("Save button not found!");
+                return;
             }
 
-            if (imageRatio > canvasRatio) {
-                baseWidth = maxWidth;
-                baseHeight = maxWidth / imageRatio;
-            } else {
-                baseHeight = maxHeight;
-                baseWidth = maxHeight * imageRatio;
-            }
-
-            const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
-            baseWidth *= fitScale;
-            baseHeight *= fitScale;
-
-            imageScale = 1;
-
-            canvasContainer.style.width = `${baseWidth}px`;
-            canvasContainer.style.height = `${baseHeight}px`;
-            canvas.width = baseWidth * pixelRatio;
-            canvas.height = baseHeight * pixelRatio;
-            canvas.style.width = `${baseWidth}px`;
-            canvas.style.height = `${baseHeight}px`;
-            ctx.scale(pixelRatio, pixelRatio);
-
-            updateZoomButtons();
-            draw();
-        };
-
-        image.onerror = () => {
-            console.error("图片加载失败:", imageUrl);
-            buttonsDiv.style.display = "block";
-            draw();
-        };
-
-        function getDistance(p1, p2) {
-            return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-        }
-
-        function updateZoomButtons() {
-            if (imageScale >= 3) {
-                zoomInButton.classList.add("disabled");
-                zoomInButton.disabled = true;
-            } else {
-                zoomInButton.classList.remove("disabled");
-                zoomInButton.disabled = false;
-            }
-            if (imageScale <= 0.5) {
-                zoomOutButton.classList.add("disabled");
-                zoomOutButton.disabled = true;
-            } else {
-                zoomOutButton.classList.remove("disabled");
-                zoomOutButton.disabled = false;
-            }
-        }
-
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
-            ctx.save();
-            ctx.translate(originX, originY);
-            ctx.scale(imageScale, imageScale);
-            ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
-            ctx.restore();
-
-            const dotRadius = 3;
-            points.forEach(point => {
-                ctx.beginPath();
-                const adjustedX = (point.x * imageScale) + originX;
-                const adjustedY = (point.y * imageScale) + originY;
-                ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                ctx.fillStyle = "red";
-                ctx.fill();
-            });
-
-            regions.forEach(region => {
-                ctx.beginPath();
-                const startX = (region[0].x * imageScale) + originX;
-                const startY = (region[0].y * imageScale) + originY;
-                ctx.moveTo(startX, startY);
-                for (let i = 1; i < region.length; i++) {
-                    const adjustedX = (region[i].x * imageScale) + originX;
-                    const adjustedY = (region[i].y * imageScale) + originY;
-                    ctx.lineTo(adjustedX, adjustedY);
+            const params = new URLSearchParams(window.location.search);
+            let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
+            if (imageUrl && !imageUrl.includes("via.placeholder")) {
+                if (!imageUrl.includes("auto=format")) {
+                    imageUrl += "?auto=format&q=20";
                 }
-                ctx.closePath();
-                ctx.strokeStyle = "lightblue";
-                ctx.stroke();
-            });
+            }
+            image.src = imageUrl;
 
-            if (points.length > 1) {
-                ctx.beginPath();
-                const startX = (points[0].x * imageScale) + originX;
-                const startY = (points[0].y * imageScale) + originY;
-                ctx.moveTo(startX, startY);
-                for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x * imageScale) + originX;
-                    const adjustedY = (points[i].y * imageScale) + originY;
-                    ctx.lineTo(adjustedX, adjustedY);
+            image.onload = () => {
+                let maxWidth = 600;
+                let maxHeight = 450;
+                const imageRatio = image.width / image.height;
+                const canvasRatio = maxWidth / maxHeight;
+
+                if (window.innerWidth <= 768) {
+                    maxWidth = window.innerWidth * 0.9;
+                    maxHeight = maxWidth * 0.75;
                 }
-                if (isClosed) {
+
+                if (imageRatio > canvasRatio) {
+                    baseWidth = maxWidth;
+                    baseHeight = maxWidth / imageRatio;
+                } else {
+                    baseHeight = maxHeight;
+                    baseWidth = maxHeight * imageRatio;
+                }
+
+                const fitScale = Math.min(maxWidth / baseWidth, maxHeight / baseHeight);
+                baseWidth *= fitScale;
+                baseHeight *= fitScale;
+
+                imageScale = 1;
+
+                canvasContainer.style.width = `${baseWidth}px`;
+                canvasContainer.style.height = `${baseHeight}px`;
+                canvas.width = baseWidth * pixelRatio;
+                canvas.height = baseHeight * pixelRatio;
+                canvas.style.width = `${baseWidth}px`;
+                canvas.style.height = `${baseHeight}px`;
+                ctx.scale(pixelRatio, pixelRatio);
+
+                updateZoomButtons();
+                draw();
+            };
+
+            image.onerror = () => {
+                console.error("图片加载失败:", imageUrl);
+                buttonsDiv.style.display = "block";
+                draw();
+            };
+
+            function getDistance(p1, p2) {
+                return Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
+            }
+
+            function updateZoomButtons() {
+                if (imageScale >= 3) {
+                    zoomInButton.classList.add("disabled");
+                    zoomInButton.disabled = true;
+                } else {
+                    zoomInButton.classList.remove("disabled");
+                    zoomInButton.disabled = false;
+                }
+                if (imageScale <= 0.5) {
+                    zoomOutButton.classList.add("disabled");
+                    zoomOutButton.disabled = true;
+                } else {
+                    zoomOutButton.classList.remove("disabled");
+                    zoomOutButton.disabled = false;
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width / pixelRatio, canvas.height / pixelRatio);
+                ctx.save();
+                ctx.translate(originX, originY);
+                ctx.scale(imageScale, imageScale);
+                ctx.drawImage(image, 0, 0, baseWidth, baseHeight);
+                ctx.restore();
+
+                const dotRadius = 3;
+                points.forEach(point => {
+                    ctx.beginPath();
+                    const adjustedX = (point.x * imageScale) + originX;
+                    const adjustedY = (point.y * imageScale) + originY;
+                    ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                    ctx.fillStyle = "red";
+                    ctx.fill();
+                });
+
+                regions.forEach(region => {
+                    ctx.beginPath();
+                    const startX = (region[0].x * imageScale) + originX;
+                    const startY = (region[0].y * imageScale) + originY;
+                    ctx.moveTo(startX, startY);
+                    for (let i = 1; i < region.length; i++) {
+                        const adjustedX = (region[i].x * imageScale) + originX;
+                        const adjustedY = (region[i].y * imageScale) + originY;
+                        ctx.lineTo(adjustedX, adjustedY);
+                    }
                     ctx.closePath();
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
-                } else {
-                    ctx.strokeStyle = "lightblue";
-                    ctx.stroke();
+                });
+
+                if (points.length > 1) {
+                    ctx.beginPath();
+                    const startX = (points[0].x * imageScale) + originX;
+                    const startY = (points[0].y * imageScale) + originY;
+                    ctx.moveTo(startX, startY);
+                    for (let i = 1; i < points.length; i++) {
+                        const adjustedX = (points[i].x * imageScale) + originX;
+                        const adjustedY = (points[i].y * imageScale) + originY;
+                        ctx.lineTo(adjustedX, adjustedY);
+                    }
+                    if (isClosed) {
+                        ctx.closePath();
+                        ctx.strokeStyle = "lightblue";
+                        ctx.stroke();
+                    } else {
+                        ctx.strokeStyle = "lightblue";
+                        ctx.stroke();
+                    }
                 }
             }
-        }
 
-        // 绘制到 offscreenCanvas，用于保存大图
-        function drawOffscreenCanvas() {
-            const offscreenCanvas = document.createElement("canvas");
-            offscreenCanvas.width = image.width;
-            offscreenCanvas.height = image.height;
-            const offCtx = offscreenCanvas.getContext("2d");
+            // 绘制到 offscreenCanvas，用于保存大图
+            function drawOffscreenCanvas() {
+                const offscreenCanvas = document.createElement("canvas");
+                offscreenCanvas.width = image.width;
+                offscreenCanvas.height = image.height;
+                const offCtx = offscreenCanvas.getContext("2d");
 
-            // 绘制原图
-            offCtx.drawImage(image, 0, 0, image.width, image.height);
-
-            // 按比例映射红点和框框到原图尺寸
-            const scaleX = image.width / (baseWidth * imageScale);
-            const scaleY = image.height / (baseHeight * imageScale);
-
-            const dotRadius = 3;
-            points.forEach(point => {
-                offCtx.beginPath();
-                const adjustedX = (point.x + originX / imageScale) * scaleX;
-                const adjustedY = (point.y + originY / imageScale) * scaleY;
-                offCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
-                offCtx.fillStyle = "red";
-                offCtx.fill();
-            });
-
-            regions.forEach(region => {
-                offCtx.beginPath();
-                const startX = (region[0].x + originX / imageScale) * scaleX;
-                const startY = (region[0].y + originY / imageScale) * scaleY;
-                offCtx.moveTo(startX, startY);
-                for (let i = 1; i < region.length; i++) {
-                    const adjustedX = (region[i].x + originX / imageScale) * scaleX;
-                    const adjustedY = (region[i].y + originY / imageScale) * scaleY;
-                    offCtx.lineTo(adjustedX, adjustedY);
+                if (!offCtx) {
+                    console.error("Failed to get offscreenCanvas context");
+                    return null;
                 }
-                offCtx.closePath();
-                offCtx.strokeStyle = "lightblue";
-                offCtx.stroke();
-            });
 
-            if (points.length > 1) {
-                offCtx.beginPath();
-                const startX = (points[0].x + originX / imageScale) * scaleX;
-                const startY = (points[0].y + originY / imageScale) * scaleY;
-                offCtx.moveTo(startX, startY);
-                for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x + originX / imageScale) * scaleX;
-                    const adjustedY = (points[i].y + originY / imageScale) * scaleY;
-                    offCtx.lineTo(adjustedX, adjustedY);
-                }
-                if (isClosed) {
+                // 绘制原图
+                offCtx.drawImage(image, 0, 0, image.width, image.height);
+
+                // 按比例映射红点和框框到原图尺寸
+                const scaleX = image.width / (baseWidth * imageScale);
+                const scaleY = image.height / (baseHeight * imageScale);
+
+                const dotRadius = 3;
+                points.forEach(point => {
+                    offCtx.beginPath();
+                    const adjustedX = (point.x + originX / imageScale) * scaleX;
+                    const adjustedY = (point.y + originY / imageScale) * scaleY;
+                    offCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                    offCtx.fillStyle = "red";
+                    offCtx.fill();
+                });
+
+                regions.forEach(region => {
+                    offCtx.beginPath();
+                    const startX = (region[0].x + originX / imageScale) * scaleX;
+                    const startY = (region[0].y + originY / imageScale) * scaleY;
+                    offCtx.moveTo(startX, startY);
+                    for (let i = 1; i < region.length; i++) {
+                        const adjustedX = (region[i].x + originX / imageScale) * scaleX;
+                        const adjustedY = (region[i].y + originY / imageScale) * scaleY;
+                        offCtx.lineTo(adjustedX, adjustedY);
+                    }
                     offCtx.closePath();
                     offCtx.strokeStyle = "lightblue";
                     offCtx.stroke();
+                });
+
+                if (points.length > 1) {
+                    offCtx.beginPath();
+                    const startX = (points[0].x + originX / imageScale) * scaleX;
+                    const startY = (points[0].y + originY / imageScale) * scaleY;
+                    offCtx.moveTo(startX, startY);
+                    for (let i = 1; i < points.length; i++) {
+                        const adjustedX = (points[i].x + originX / imageScale) * scaleX;
+                        const adjustedY = (points[i].y + originY / imageScale) * scaleY;
+                        offCtx.lineTo(adjustedX, adjustedY);
+                    }
+                    if (isClosed) {
+                        offCtx.closePath();
+                        offCtx.strokeStyle = "lightblue";
+                        offCtx.stroke();
+                    } else {
+                        offCtx.strokeStyle = "lightblue";
+                        offCtx.stroke();
+                    }
+                }
+
+                // 示例替换操作：填充框框区域（实际替换需根据需求调整）
+                if (regions.length > 0) {
+                    const latestRegion = regions[regions.length - 1];
+                    offCtx.beginPath();
+                    const startX = (latestRegion[0].x + originX / imageScale) * scaleX;
+                    const startY = (latestRegion[0].y + originY / imageScale) * scaleY;
+                    offCtx.moveTo(startX, startY);
+                    for (let i = 1; i < latestRegion.length; i++) {
+                        const adjustedX = (latestRegion[i].x + originX / imageScale) * scaleX;
+                        const adjustedY = (latestRegion[i].y + originY / imageScale) * scaleY;
+                        offCtx.lineTo(adjustedX, adjustedY);
+                    }
+                    offCtx.closePath();
+                    offCtx.fillStyle = "rgba(255, 0, 0, 0.5)"; // 示例填充红色半透明
+                    offCtx.fill();
+                }
+
+                return offscreenCanvas;
+            }
+
+            function getEventPosition(e) {
+                const rect = canvas.getBoundingClientRect();
+                let clientX, clientY;
+                if (e.type.includes("touch")) {
+                    if (e.type === "touchend") {
+                        clientX = e.changedTouches[0].clientX;
+                        clientY = e.changedTouches[0].clientY;
+                    } else {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    }
                 } else {
-                    offCtx.strokeStyle = "lightblue";
-                    offCtx.stroke();
+                    clientX = e.clientX;
+                    clientY = e.clientY;
                 }
+                const rawX = clientX - rect.left;
+                const rawY = clientY - rect.top;
+                return { 
+                    x: (rawX - originX) / imageScale, 
+                    y: (rawY - originY) / imageScale,
+                    rawX,
+                    rawY
+                };
             }
 
-            // 示例替换操作：填充框框区域（此处为示例，实际替换需根据您的需求调整）
-            if (regions.length > 0) {
-                const latestRegion = regions[regions.length - 1];
-                offCtx.beginPath();
-                const startX = (latestRegion[0].x + originX / imageScale) * scaleX;
-                const startY = (latestRegion[0].y + originY / imageScale) * scaleY;
-                offCtx.moveTo(startX, startY);
-                for (let i = 1; i < latestRegion.length; i++) {
-                    const adjustedX = (latestRegion[i].x + originX / imageScale) * scaleX;
-                    const adjustedY = (latestRegion[i].y + originY / imageScale) * scaleY;
-                    offCtx.lineTo(adjustedX, adjustedY);
-                }
-                offCtx.closePath();
-                offCtx.fillStyle = "rgba(255, 0, 0, 0.5)"; // 示例填充红色半透明
-                offCtx.fill();
+            function handleStart(e) {
+                if (isClosed) return;
+
+                e.preventDefault();
+                const { rawX, rawY } = getEventPosition(e); // 使用 rawX 和 rawY
+                startX = rawX;
+                startY = rawY;
+                initialOriginX = originX;
+                initialOriginY = originY;
+                startTime = Date.now();
+                isDraggingIntent = false;
+                isDragging = true;
             }
 
-            return offscreenCanvas;
-        }
+            function handleMove(e) {
+                if (!isDragging) return;
 
-        function getEventPosition(e) {
-            const rect = canvas.getBoundingClientRect();
-            let clientX, clientY;
-            if (e.type.includes("touch")) {
-                if (e.type === "touchend") {
-                    clientX = e.changedTouches[0].clientX;
-                    clientY = e.changedTouches[0].clientY;
+                e.preventDefault();
+                const { rawX, rawY } = getEventPosition(e);
+                originX = initialOriginX + (rawX - startX);
+                originY = initialOriginY + (rawY - startY);
+                draw();
+            }
+
+            function handleEnd(e) {
+                if (!isDragging) return;
+
+                e.preventDefault();
+                const { x, y } = getEventPosition(e);
+                const duration = Date.now() - startTime;
+
+                if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
+                    points.push({ x, y });
+                    draw();
+                    console.log("Clicked at (adjusted):", x, y);
+                }
+
+                isDragging = false;
+            }
+
+            canvas.addEventListener("mousedown", handleStart);
+            canvas.addEventListener("mousemove", handleMove);
+            canvas.addEventListener("mouseup", handleEnd);
+            canvas.addEventListener("mouseleave", handleEnd);
+
+            canvas.addEventListener("touchstart", handleStart);
+            canvas.addEventListener("touchmove", handleMove);
+            canvas.addEventListener("touchend", handleEnd);
+
+            confirmButton.addEventListener("click", () => {
+                if (points.length >= 4) {
+                    isClosed = true;
+                    regions.push([...points]);
+                    points = [];
+                    isClosed = false;
+                    draw();
+                    console.log("Regions confirmed:", regions);
+                }
+            });
+
+            undoButton.addEventListener("click", () => {
+                if (points.length > 0 && !isClosed) {
+                    points.pop();
+                    draw();
+                    console.log("Undo: Removed last point, remaining points:", points);
+                } else if (regions.length > 0) {
+                    regions.pop();
+                    draw();
+                    console.log("Undo: Removed last region, remaining regions:", regions);
+                }
+            });
+
+            zoomInButton.addEventListener("click", () => {
+                if (imageScale < 3) {
+                    imageScale *= 1.2;
+                    console.log("Zoom In:", imageScale);
+                    updateZoomButtons();
+                    draw();
+                }
+            });
+
+            zoomOutButton.addEventListener("click", () => {
+                if (imageScale > 0.5) {
+                    imageScale /= 1.2;
+                    console.log("Zoom Out:", imageScale);
+                    updateZoomButtons();
+                    draw();
+                }
+            });
+
+            // 保存大图
+            saveButton.addEventListener("click", () => {
+                const offscreenCanvas = drawOffscreenCanvas();
+                if (offscreenCanvas) {
+                    const dataURL = offscreenCanvas.toDataURL("image/png");
+                    const link = document.createElement("a");
+                    link.href = dataURL;
+                    link.download = "annotated_image.png";
+                    document.body.appendChild(link); // 确保 DOM 中添加链接
+                    link.click();
+                    document.body.removeChild(link); // 清理
+                    console.log("Image saved:", dataURL);
                 } else {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
+                    console.error("Failed to create offscreenCanvas");
                 }
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-            const rawX = clientX - rect.left;
-            const rawY = clientY - rect.top;
-            return { 
-                x: (rawX - originX) / imageScale, 
-                y: (rawY - originY) / imageScale,
-                rawX,
-                rawY
-            };
-        }
+            });
 
-        function handleStart(e) {
-            if (isClosed) return;
-
-            e.preventDefault();
-            const { rawX, rawY } = getEventPosition(e); // 使用 rawX 和 rawY
-            startX = rawX;
-            startY = rawY;
-            initialOriginX = originX;
-            initialOriginY = originY;
-            startTime = Date.now();
-            isDraggingIntent = false;
-            isDragging = true;
-        }
-
-        function handleMove(e) {
-            if (!isDragging) return;
-
-            e.preventDefault();
-            const { rawX, rawY } = getEventPosition(e);
-            originX = initialOriginX + (rawX - startX);
-            originY = initialOriginY + (rawY - startY);
-            draw();
-        }
-
-        function handleEnd(e) {
-            if (!isDragging) return;
-
-            e.preventDefault();
-            const { x, y } = getEventPosition(e);
-            const duration = Date.now() - startTime;
-
-            if (!isDraggingIntent && duration < clickTimeThreshold && !isClosed) {
-                points.push({ x, y });
-                draw();
-                console.log("Clicked at (adjusted):", x, y);
-            }
-
-            isDragging = false;
-        }
-
-        canvas.addEventListener("mousedown", handleStart);
-        canvas.addEventListener("mousemove", handleMove);
-        canvas.addEventListener("mouseup", handleEnd);
-        canvas.addEventListener("mouseleave", handleEnd);
-
-        canvas.addEventListener("touchstart", handleStart);
-        canvas.addEventListener("touchmove", handleMove);
-        canvas.addEventListener("touchend", handleEnd);
-
-        confirmButton.addEventListener("click", () => {
-            if (points.length >= 4) {
-                isClosed = true;
-                regions.push([...points]);
-                points = [];
-                isClosed = false;
-                draw();
-                console.log("Regions confirmed:", regions);
-            }
-        });
-
-        undoButton.addEventListener("click", () => {
-            if (points.length > 0 && !isClosed) {
-                points.pop();
-                draw();
-                console.log("Undo: Removed last point, remaining points:", points);
-            } else if (regions.length > 0) {
-                regions.pop();
-                draw();
-                console.log("Undo: Removed last region, remaining regions:", regions);
-            }
-        });
-
-        zoomInButton.addEventListener("click", () => {
-            if (imageScale < 3) {
-                imageScale *= 1.2;
-                console.log("Zoom In:", imageScale);
-                updateZoomButtons();
-                draw();
-            }
-        });
-
-        zoomOutButton.addEventListener("click", () => {
-            if (imageScale > 0.5) {
-                imageScale /= 1.2;
-                console.log("Zoom Out:", imageScale);
-                updateZoomButtons();
-                draw();
-            }
-        });
-
-        // 保存大图
-        saveButton.addEventListener("click", () => {
-            const offscreenCanvas = drawOffscreenCanvas();
-            const dataURL = offscreenCanvas.toDataURL("image/png");
-            const link = document.createElement("a");
-            link.href = dataURL;
-            link.download = "annotated_image.png";
-            link.click();
-            console.log("Image saved:", dataURL);
-        });
-
-        console.log("Image URL:", imageUrl);
+            console.log("Image URL:", imageUrl);
+        };
     </script>
 </body>
 </html>
