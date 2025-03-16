@@ -47,7 +47,7 @@
             min-height: 50px;
             margin-left: 20px; /* 左侧空出 20px */
         }
-        #confirmButton, #undoButton {
+        #confirmButton, #undoButton, #saveButton {
             padding: 6px 12px; /* 调小 */
             margin: 0;
             font-size: 14px;
@@ -100,7 +100,7 @@
                 min-height: 40px;
                 margin-left: 20px; /* 左侧空出 20px */
             }
-            #confirmButton, #undoButton {
+            #confirmButton, #undoButton, #saveButton {
                 padding: 4px 8px; /* 移动端调小 */
                 font-size: 12px;
                 height: 24px; /* 移动端调小 */
@@ -129,6 +129,7 @@
             <button id="undoButton">Undo</button>
             <button id="zoomInButton">+</button>
             <button id="zoomOutButton">-</button>
+            <button id="saveButton">Save</button> <!-- 临时添加用于测试 -->
         </div>
     </div>
     <script>
@@ -154,6 +155,7 @@
         const undoButton = document.getElementById("undoButton");
         const zoomInButton = document.getElementById("zoomInButton");
         const zoomOutButton = document.getElementById("zoomOutButton");
+        const saveButton = document.getElementById("saveButton");
         const buttonsDiv = document.getElementById("buttons");
         const pixelRatio = window.devicePixelRatio || 1;
         const dragThreshold = 5;
@@ -265,7 +267,6 @@
                 ctx.stroke();
             });
 
-            // 实时连接线段：点击第二个点时开始连接
             if (points.length > 1) {
                 ctx.beginPath();
                 const startX = (points[0].x * imageScale) + originX;
@@ -281,11 +282,89 @@
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
                 } else {
-                    // 绘制未闭合的线段，颜色与框框相同
                     ctx.strokeStyle = "lightblue";
                     ctx.stroke();
                 }
             }
+        }
+
+        // 绘制到 offscreenCanvas，用于保存大图
+        function drawOffscreenCanvas() {
+            const offscreenCanvas = document.createElement("canvas");
+            offscreenCanvas.width = image.width;
+            offscreenCanvas.height = image.height;
+            const offCtx = offscreenCanvas.getContext("2d");
+
+            // 绘制原图
+            offCtx.drawImage(image, 0, 0, image.width, image.height);
+
+            // 按比例映射红点和框框到原图尺寸
+            const dotRatioX = image.width / baseWidth;
+            const dotRatioY = image.height / baseHeight;
+
+            const dotRadius = 3;
+            points.forEach(point => {
+                offCtx.beginPath();
+                const adjustedX = (point.x * imageScale + originX) * dotRatioX / imageScale;
+                const adjustedY = (point.y * imageScale + originY) * dotRatioY / imageScale;
+                offCtx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
+                offCtx.fillStyle = "red";
+                offCtx.fill();
+            });
+
+            regions.forEach(region => {
+                offCtx.beginPath();
+                const startX = (region[0].x * imageScale + originX) * dotRatioX / imageScale;
+                const startY = (region[0].y * imageScale + originY) * dotRatioY / imageScale;
+                offCtx.moveTo(startX, startY);
+                for (let i = 1; i < region.length; i++) {
+                    const adjustedX = (region[i].x * imageScale + originX) * dotRatioX / imageScale;
+                    const adjustedY = (region[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    offCtx.lineTo(adjustedX, adjustedY);
+                }
+                offCtx.closePath();
+                offCtx.strokeStyle = "lightblue";
+                offCtx.stroke();
+            });
+
+            if (points.length > 1) {
+                offCtx.beginPath();
+                const startX = (points[0].x * imageScale + originX) * dotRatioX / imageScale;
+                const startY = (points[0].y * imageScale + originY) * dotRatioY / imageScale;
+                offCtx.moveTo(startX, startY);
+                for (let i = 1; i < points.length; i++) {
+                    const adjustedX = (points[i].x * imageScale + originX) * dotRatioX / imageScale;
+                    const adjustedY = (points[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    offCtx.lineTo(adjustedX, adjustedY);
+                }
+                if (isClosed) {
+                    offCtx.closePath();
+                    offCtx.strokeStyle = "lightblue";
+                    offCtx.stroke();
+                } else {
+                    offCtx.strokeStyle = "lightblue";
+                    offCtx.stroke();
+                }
+            }
+
+            // 示例替换操作：填充框框区域（此处为示例，实际替换需根据您的需求调整）
+            if (regions.length > 0) {
+                const latestRegion = regions[regions.length - 1];
+                offCtx.beginPath();
+                const startX = (latestRegion[0].x * imageScale + originX) * dotRatioX / imageScale;
+                const startY = (latestRegion[0].y * imageScale + originY) * dotRatioY / imageScale;
+                offCtx.moveTo(startX, startY);
+                for (let i = 1; i < latestRegion.length; i++) {
+                    const adjustedX = (latestRegion[i].x * imageScale + originX) * dotRatioX / imageScale;
+                    const adjustedY = (latestRegion[i].y * imageScale + originY) * dotRatioY / imageScale;
+                    offCtx.lineTo(adjustedX, adjustedY);
+                }
+                offCtx.closePath();
+                offCtx.fillStyle = "rgba(255, 0, 0, 0.5)"; // 示例填充红色半透明
+                offCtx.fill();
+            }
+
+            return offscreenCanvas;
         }
 
         function getEventPosition(e) {
@@ -401,6 +480,17 @@
                 updateZoomButtons();
                 draw();
             }
+        });
+
+        // 保存大图
+        saveButton.addEventListener("click", () => {
+            const offscreenCanvas = drawOffscreenCanvas();
+            const dataURL = offscreenCanvas.toDataURL("image/png");
+            const link = document.createElement("a");
+            link.href = dataURL;
+            link.download = "annotated_image.png";
+            link.click();
+            console.log("Image saved:", dataURL);
         });
 
         console.log("Image URL:", imageUrl);
