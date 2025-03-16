@@ -236,8 +236,8 @@
             const dotRadius = 3;
             points.forEach(point => {
                 ctx.beginPath();
-                const adjustedX = (point.x * imageScale) + (originX / imageScale);
-                const adjustedY = (point.y * imageScale) + (originY / imageScale);
+                const adjustedX = (point.x * imageScale) + originX;
+                const adjustedY = (point.y * imageScale) + originY;
                 ctx.arc(adjustedX, adjustedY, dotRadius, 0, 2 * Math.PI);
                 ctx.fillStyle = "red";
                 ctx.fill();
@@ -245,12 +245,12 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                const startX = (region[0].x * imageScale) + (originX / imageScale);
-                const startY = (region[0].y * imageScale) + (originY / imageScale);
+                const startX = (region[0].x * imageScale) + originX;
+                const startY = (region[0].y * imageScale) + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < region.length; i++) {
-                    const adjustedX = (region[i].x * imageScale) + (originX / imageScale);
-                    const adjustedY = (region[i].y * imageScale) + (originY / imageScale);
+                    const adjustedX = (region[i].x * imageScale) + originX;
+                    const adjustedY = (region[i].y * imageScale) + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 ctx.closePath();
@@ -260,12 +260,12 @@
 
             if (points.length > 1) {
                 ctx.beginPath();
-                const startX = (points[0].x * imageScale) + (originX / imageScale);
-                const startY = (points[0].y * imageScale) + (originY / imageScale);
+                const startX = (points[0].x * imageScale) + originX;
+                const startY = (points[0].y * imageScale) + originY;
                 ctx.moveTo(startX, startY);
                 for (let i = 1; i < points.length; i++) {
-                    const adjustedX = (points[i].x * imageScale) + (originX / imageScale);
-                    const adjustedY = (points[i].y * imageScale) + (originY / imageScale);
+                    const adjustedX = (points[i].x * imageScale) + originX;
+                    const adjustedY = (points[i].y * imageScale) + originY;
                     ctx.lineTo(adjustedX, adjustedY);
                 }
                 if (isClosed) {
@@ -294,8 +294,10 @@
             const rawX = clientX - rect.left;
             const rawY = clientY - rect.top;
             return { 
-                x: (rawX - originX) / imageScale, 
-                y: (rawY - originY) / imageScale 
+                x: (rawX / imageScale) - (originX / imageScale), 
+                y: (rawY / imageScale) - (originY / imageScale),
+                rawX,
+                rawY
             };
         }
 
@@ -317,9 +319,9 @@
             if (!isDragging) return;
 
             e.preventDefault();
-            const { x, y } = getEventPosition(e);
-            originX = initialOriginX + (x - startX);
-            originY = initialOriginY + (y - startY);
+            const { rawX, rawY } = getEventPosition(e);
+            originX = initialOriginX + (rawX - startX);
+            originY = initialOriginY + (rawY - startY);
             draw();
         }
 
