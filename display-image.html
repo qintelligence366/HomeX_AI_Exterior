@@ -41,18 +41,20 @@
             display: flex !important;
             justify-content: flex-start !important; /* 左侧对齐 */
             align-items: center !important;
-            gap: 10px !important; /* Confirm 和 Undo 间距 */
+            gap: 10px !important; /* Confirm 和 Undo 间距，Zoom In 和 Zoom Out 间距 */
             width: auto;
             min-width: 600px;
             min-height: 50px;
-            margin-left: 20px; /* 左侧空出 20px */
+            margin-left: 15px; /* 左侧空出 15px */
         }
         #confirmButton, #undoButton {
             padding: 6px 12px; /* 调小 */
             margin: 0;
             font-size: 14px;
             height: 30px; /* 调小 */
-            line-height: 18px;
+            line-height: 30px; /* 垂直居中 */
+            width: 80px; /* 固定宽度 */
+            text-align: center; /* 文字水平居中 */
             cursor: pointer;
             box-sizing: border-box;
         }
@@ -72,9 +74,9 @@
             background: #ccc;
             cursor: not-allowed;
         }
-        /* 自定义间距：Undo 和 Zoom In 之间 20px，Zoom In 和 Zoom Out 之间 10px */
+        /* 自定义间距：Undo 和 Zoom In 之间 15px */
         #buttons > #undoButton + #zoomInButton {
-            margin-left: 10px; /* 20px - 10px (默认 gap) = 10px */
+            margin-left: 5px; /* 15px - 10px (默认 gap) = 5px */
         }
         @media (max-width: 768px) {
             .container {
@@ -90,22 +92,23 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 30px; /* 30px最合适 */
+                bottom: 40px; /* 40px最合适 */
                 left: 0; /* 调整为左侧对齐 */
                 transform: none; /* 移除居中转换 */
                 width: auto;
                 min-width: 90vw;
-                gap: 10px !important; /* Confirm 和 Undo 间距 */
+                gap: 10px !important; /* Confirm 和 Undo 间距，Zoom In 和 Zoom Out 间距 */
                 align-items: center;
                 min-height: 40px;
-                margin-left: 20px; /* 左侧空出 20px */
+                margin-left: 15px; /* 左侧空出 15px */
             }
             #confirmButton, #undoButton {
                 padding: 4px 8px; /* 移动端调小 */
                 font-size: 12px;
                 height: 24px; /* 移动端调小 */
-                line-height: 16px;
-                width: auto;
+                line-height: 24px; /* 垂直居中 */
+                width: 60px; /* 固定宽度 */
+                text-align: center; /* 文字水平居中 */
                 box-sizing: border-box;
             }
             #zoomInButton, #zoomOutButton {
@@ -114,7 +117,7 @@
                 font-size: 16px;
             }
             #buttons > #undoButton + #zoomInButton {
-                margin-left: 10px; /* 20px - 10px (默认 gap) = 10px */
+                margin-left: 5px; /* 15px - 10px (默认 gap) = 5px */
             }
         }
     </style>
