@@ -117,8 +117,8 @@
 
             const dotRadius = 3;
             points.forEach((point, index) => {
-                let displayX = point.x;
-                let displayY = point.y;
+                let displayX = (point.x - originX) * imageScale + originX;
+                let displayY = (point.y - originY) * imageScale + originY;
                 if (!isClosed && isMoving) return; // 框框未形成前，移动或缩放时红点消失
                 ctx.beginPath();
                 ctx.arc(displayX, displayY, dotRadius, 0, 2 * Math.PI);
@@ -128,9 +128,9 @@
 
             regions.forEach(region => {
                 ctx.beginPath();
-                ctx.moveTo(region[0].x, region[0].y);
+                ctx.moveTo((region[0].x - originX) * imageScale + originX, (region[0].y - originY) * imageScale + originY);
                 for (let i = 1; i < region.length; i++) {
-                    ctx.lineTo(region[i].x, region[i].y);
+                    ctx.lineTo((region[i].x - originX) * imageScale + originX, (region[i].y - originY) * imageScale + originY);
                 }
                 ctx.closePath();
                 ctx.strokeStyle = "lightblue";
@@ -139,9 +139,9 @@
 
             if (points.length > 1 && !isMoving) {
                 ctx.beginPath();
-                ctx.moveTo(points[0].x, points[0].y);
+                ctx.moveTo((points[0].x - originX) * imageScale + originX, (points[0].y - originY) * imageScale + originY);
                 for (let i = 1; i < points.length; i++) {
-                    ctx.lineTo(points[i].x, points[i].y);
+                    ctx.lineTo((points[i].x - originX) * imageScale + originX, (points[i].y - originY) * imageScale + originY);
                 }
                 if (isClosed) {
                     ctx.closePath();
@@ -193,10 +193,6 @@
                 originY += (rawY - startY);
                 startX = rawX;
                 startY = rawY;
-                points.forEach(point => {
-                    point.x += (rawX - startX);
-                    point.y += (rawY - startY);
-                });
                 draw();
             }
         }
