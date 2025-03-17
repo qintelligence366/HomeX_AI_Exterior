@@ -35,23 +35,23 @@
             height: 100%;
         }
         #buttons {
-            margin-top: 5px; /* 5px最合适 */
+            margin-top: 5px;
             padding: 0 !important;
-            text-align: left; /* 左侧对齐 */
+            text-align: left;
             display: flex !important;
-            justify-content: flex-start !important; /* 左侧对齐 */
+            justify-content: flex-start !important;
             align-items: center !important;
-            gap: 10px !important; /* Confirm 和 Undo 间距 */
+            gap: 10px !important;
             width: auto;
             min-width: 600px;
             min-height: 50px;
-            margin-left: 20px; /* 左侧空出 20px */
+            margin-left: 20px;
         }
-        #confirmButton, #undoButton, #saveButton {
-            padding: 6px 12px; /* 调小 */
+        #confirmButton, #undoButton, #saveButton, #generateButton {
+            padding: 6px 12px;
             margin: 0;
             font-size: 14px;
-            height: 30px; /* 调小 */
+            height: 30px;
             line-height: 18px;
             cursor: pointer;
             box-sizing: border-box;
@@ -72,9 +72,8 @@
             background: #ccc;
             cursor: not-allowed;
         }
-        /* 自定义间距：Undo 和 Zoom In 之间 15px，Zoom In 和 Zoom Out 之间 10px */
         #buttons > #undoButton + #zoomInButton {
-            margin-left: 5px; /* 15px - 10px (默认 gap) = 5px */
+            margin-left: 5px;
         }
         @media (max-width: 768px) {
             .container {
@@ -90,20 +89,20 @@
             }
             #buttons {
                 position: fixed;
-                bottom: 50px; /* 50px最合适 */
-                left: 0; /* 调整为左侧对齐 */
-                transform: none; /* 移除居中转换 */
+                bottom: 50px;
+                left: 0;
+                transform: none;
                 width: auto;
                 min-width: 90vw;
-                gap: 10px !important; /* Confirm 和 Undo 间距 */
+                gap: 10px !important;
                 align-items: center;
                 min-height: 40px;
-                margin-left: 20px; /* 左侧空出 20px */
+                margin-left: 20px;
             }
-            #confirmButton, #undoButton, #saveButton {
-                padding: 4px 8px; /* 移动端调小 */
+            #confirmButton, #undoButton, #saveButton, #generateButton {
+                padding: 4px 8px;
                 font-size: 12px;
-                height: 24px; /* 移动端调小 */
+                height: 24px;
                 line-height: 16px;
                 width: auto;
                 box-sizing: border-box;
@@ -114,7 +113,7 @@
                 font-size: 16px;
             }
             #buttons > #undoButton + #zoomInButton {
-                margin-left: 5px; /* 15px - 10px (默认 gap) = 5px */
+                margin-left: 5px;
             }
         }
     </style>
@@ -129,6 +128,7 @@
             <button id="undoButton">Undo</button>
             <button id="zoomInButton">+</button>
             <button id="zoomOutButton">-</button>
+            <button id="generateButton">Generate</button>
             <button id="saveButton">Save</button>
         </div>
     </div>
@@ -158,19 +158,20 @@
             const zoomInButton = document.getElementById("zoomInButton");
             const zoomOutButton = document.getElementById("zoomOutButton");
             const saveButton = document.getElementById("saveButton");
+            const generateButton = document.getElementById("generateButton");
             const buttonsDiv = document.getElementById("buttons");
             const pixelRatio = window.devicePixelRatio || 1;
             const dragThreshold = 5;
             const clickTimeThreshold = 300;
 
-            if (!saveButton) {
-                console.error("Save button not found!");
+            if (!saveButton || !generateButton) {
+                console.error("Button not found!");
                 return;
             }
 
             const params = new URLSearchParams(window.location.search);
             let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
-            let originalImageUrl = imageUrl; // 假设原图 URL 与小图 URL 相同，实际需提供原图 URL
+            let originalImageUrl = params.get("originalImageUrl") || imageUrl;
             if (imageUrl && !imageUrl.includes("via.placeholder")) {
                 if (!imageUrl.includes("auto=format")) {
                     imageUrl += "?auto=format&q=20";
@@ -311,7 +312,6 @@
                 const rawX = (clientX - rect.left - originX) / imageScale;
                 const rawY = (clientY - rect.top - originY) / imageScale;
 
-                // 返回相对原图的比例坐标
                 return {
                     x: rawX / baseWidth,
                     y: rawY / baseHeight,
@@ -324,7 +324,7 @@
                 if (isClosed) return;
 
                 e.preventDefault();
-                const { rawX, rawY } = getEventPosition(e); // 使用 rawX 和 rawY
+                const { rawX, rawY } = getEventPosition(e);
                 startX = rawX;
                 startY = rawY;
                 initialOriginX = originX;
@@ -379,8 +379,6 @@
                     console.log("Regions confirmed:", regions);
                     console.log("Sending regions:", regions);
                     window.parent.postMessage({ type: "saveRegions", regions: regions }, "*");
-                    // 存储 regions 到 localStorage
-                    localStorage.setItem("currentRegions", JSON.stringify(regions));
                 }
             });
 
@@ -414,10 +412,9 @@
                 }
             });
 
-            // 保存高分辨率图片
             saveButton.addEventListener("click", () => {
                 const highResImage = new Image();
-                highResImage.crossOrigin = "anonymous"; // 允许跨域加载
+                highResImage.crossOrigin = "anonymous";
                 highResImage.src = originalImageUrl;
 
                 highResImage.onload = () => {
@@ -431,10 +428,8 @@
                         return;
                     }
 
-                    // 在原图 Canvas 上绘制原图
                     highResCtx.drawImage(highResImage, 0, 0, highResImage.width, highResImage.height);
 
-                    // 修正点的绘制
                     const dotRadius = 5;
                     points.forEach(point => {
                         highResCtx.beginPath();
@@ -445,7 +440,6 @@
                         highResCtx.fill();
                     });
 
-                    // 修正框框的绘制
                     regions.forEach(region => {
                         highResCtx.beginPath();
                         const startX = region[0].x * highResImage.width;
@@ -461,7 +455,6 @@
                         highResCtx.stroke();
                     });
 
-                    // 生成高分辨率图片并保存
                     const dataURL = highResCanvas.toDataURL("image/png");
                     const link = document.createElement("a");
                     link.href = dataURL;
@@ -481,8 +474,35 @@
                 };
             });
 
+            generateButton.addEventListener("click", () => {
+                if (regions.length > 0) {
+                    const data = {
+                        imageUrl: originalImageUrl,
+                        regions: regions,
+                        productId: productId
+                    };
+                    fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        console.log("Generate response:", result);
+                        if (result.imageUrl) {
+                            window.parent.postMessage({ type: "newImageUrl", url: result.imageUrl }, "*");
+                        }
+                    })
+                    .catch(error => console.error("Generate error:", error));
+                } else {
+                    console.log("No regions defined.");
+                }
+            });
+
             console.log("Image URL:", imageUrl);
         };
     </script>
-</body>
-</html>
+  </body>
+  </html>
