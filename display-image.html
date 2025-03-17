@@ -284,7 +284,7 @@
                     ctx.moveTo(startX, startY);
                     for (let i = 1; i < points.length; i++) {
                         const adjustedX = points[i].x * baseWidth * imageScale + originX;
-                        const adjustedY = point[i].y * baseHeight * imageScale + originY;
+                        const adjustedY = points[i].y * baseHeight * imageScale + originY;
                         ctx.lineTo(adjustedX, adjustedY);
                     }
                     if (isClosed) {
@@ -480,7 +480,7 @@
                     const data = {
                         imageUrl: originalImageUrl,
                         regions: regions,
-                        productId: productId
+                        productUrl: productUrl // 修正为 productUrl
                     };
                     fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
                         method: 'POST',
@@ -504,4 +504,6 @@
 
             console.log("Image URL:", imageUrl);
         };
-</script>
+    </script>
+</body>
+</html>
