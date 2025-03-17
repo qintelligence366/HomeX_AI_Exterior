@@ -484,10 +484,10 @@
                 if (regions.length > 0) {
                     const data = {
                         imageUrl: originalImageUrl,
-                        regions: regions,
+                        regions: JSON.stringify(regions), // 将 regions 转换为字符串
                         productUrl: productUrl
                     };
-                    console.log("Request Body:", JSON.stringify(data)); // 添加日志
+                    console.log("Request Body:", JSON.stringify(data));
                     fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
                         method: 'POST',
                         headers: {
