@@ -170,12 +170,15 @@
             }
 
             const url = window.location.href;
-            console.log("Full URL:", url);
-            const urlParams = new URLSearchParams(url.split('?')[1] || url.split('#')[1]);
+            console.log("Full URL received:", url);
+            const searchParams = window.location.search;
+            console.log("Search Params:", searchParams);
+            const urlParams = new URLSearchParams(searchParams);
+            console.log("URL Params Entries:", Array.from(urlParams.entries()));
             let imageUrl = urlParams.get("imageUrl") || "https://placehold.co/600x400";
-            let originalImageUrl = urlParams.get("originalImageUrl") || imageUrl;
             let productUrl = urlParams.get("productUrl") || "https://placehold.co/600x400";
-            // 清理 productUrl 中的额外参数
+            console.log("Raw Image URL:", urlParams.get("imageUrl"));
+            console.log("Raw Product URL:", urlParams.get("productUrl"));
             if (productUrl && productUrl.includes("?")) {
                 productUrl = productUrl.split("?")[0];
             }
