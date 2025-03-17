@@ -377,6 +377,8 @@
                     isClosed = false;
                     draw();
                     console.log("Regions confirmed:", regions);
+                    console.log("Sending regions:", regions);
+                    window.parent.postMessage({ type: "saveRegions", regions: regions }, "*");
                 }
             });
 
