@@ -379,6 +379,8 @@
                     console.log("Regions confirmed:", regions);
                     console.log("Sending regions:", regions);
                     window.parent.postMessage({ type: "saveRegions", regions: regions }, "*");
+                    // 存储 regions 到 localStorage
+                    localStorage.setItem("currentRegions", JSON.stringify(regions));
                 }
             });
 
