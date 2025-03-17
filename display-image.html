@@ -171,13 +171,10 @@
 
             const url = window.location.href;
             console.log("Full URL:", url);
-            const params = {};
-            url.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, key, value) {
-                params[key] = decodeURIComponent(value);
-            });
-            let imageUrl = params["imageUrl"] || "https://placehold.co/600x400";
-            let originalImageUrl = params["originalImageUrl"] || imageUrl;
-            let productUrl = params["productUrl"] || "https://placehold.co/600x400";
+            const urlParams = new URLSearchParams(url.split('?')[1] || url.split('#')[1]);
+            let imageUrl = urlParams.get("imageUrl") || "https://placehold.co/600x400";
+            let originalImageUrl = urlParams.get("originalImageUrl") || imageUrl;
+            let productUrl = urlParams.get("productUrl") || "https://placehold.co/600x400";
             // 清理 productUrl 中的额外参数
             if (productUrl && productUrl.includes("?")) {
                 productUrl = productUrl.split("?")[0];
