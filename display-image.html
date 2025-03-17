@@ -169,10 +169,16 @@
                 return;
             }
 
-            const params = new URLSearchParams(window.location.search);
+            // 改进参数解析
+            const url = window.location.href;
+            console.log("Full URL:", url);
+            const params = new URLSearchParams(url.split('?')[1] || url.split('#')[1]);
             let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
             let originalImageUrl = params.get("originalImageUrl") || imageUrl;
             let productUrl = params.get("productUrl") || "https://via.placeholder.com/600"; // 从 URL 参数获取产品图片 URL
+            console.log("User Image URL:", imageUrl);
+            console.log("Product Image URL:", productUrl);
+
             if (imageUrl && !imageUrl.includes("via.placeholder")) {
                 if (!imageUrl.includes("auto=format")) {
                     imageUrl += "?auto=format&q=20";
@@ -480,7 +486,7 @@
                     const data = {
                         imageUrl: originalImageUrl,
                         regions: regions,
-                        productUrl: productUrl // 修正为 productUrl
+                        productUrl: productUrl
                     };
                     fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
                         method: 'POST',
