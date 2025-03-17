@@ -172,6 +172,7 @@
             const params = new URLSearchParams(window.location.search);
             let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
             let originalImageUrl = params.get("originalImageUrl") || imageUrl;
+            let productUrl = params.get("productUrl") || "https://via.placeholder.com/600"; // 从 URL 参数获取产品图片 URL
             if (imageUrl && !imageUrl.includes("via.placeholder")) {
                 if (!imageUrl.includes("auto=format")) {
                     imageUrl += "?auto=format&q=20";
@@ -283,7 +284,7 @@
                     ctx.moveTo(startX, startY);
                     for (let i = 1; i < points.length; i++) {
                         const adjustedX = points[i].x * baseWidth * imageScale + originX;
-                        const adjustedY = points[i].y * baseHeight * imageScale + originY;
+                        const adjustedY = point[i].y * baseHeight * imageScale + originY;
                         ctx.lineTo(adjustedX, adjustedY);
                     }
                     if (isClosed) {
@@ -503,6 +504,4 @@
 
             console.log("Image URL:", imageUrl);
         };
-    </script>
-  </body>
-  </html>
+</script>
