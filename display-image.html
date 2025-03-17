@@ -172,13 +172,17 @@
             const url = window.location.href;
             console.log("Full URL:", url);
             const params = new URLSearchParams(url.split('?')[1] || url.split('#')[1]);
-            let imageUrl = params.get("imageUrl") || "https://via.placeholder.com/600";
+            let imageUrl = params.get("imageUrl") || "https://placehold.co/600x400"; // 更新默认图片 URL
             let originalImageUrl = params.get("originalImageUrl") || imageUrl;
-            let productUrl = params.get("productUrl") || "https://via.placeholder.com/600";
+            let productUrl = params.get("productUrl") || "https://placehold.co/600x400"; // 更新默认图片 URL
+            // 清理 productUrl 中的额外参数
+            if (productUrl) {
+                productUrl = productUrl.split('?')[0];
+            }
             console.log("User Image URL:", imageUrl);
             console.log("Product Image URL:", productUrl);
 
-            if (imageUrl && !imageUrl.includes("via.placeholder")) {
+            if (imageUrl && !imageUrl.includes("placehold.co")) {
                 if (!imageUrl.includes("auto=format")) {
                     imageUrl += "?auto=format&q=20";
                 }
@@ -484,7 +488,7 @@
                 if (regions.length > 0) {
                     const data = {
                         imageUrl: originalImageUrl,
-                        regions: JSON.stringify(regions), // 将 regions 转换为字符串
+                        regions: JSON.stringify(regions),
                         productUrl: productUrl
                     };
                     console.log("Request Body:", JSON.stringify(data));
