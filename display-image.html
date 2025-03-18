@@ -33,7 +33,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: transparent; /* 确保空白背景 */
+            background-color: transparent;
         }
         #buttons {
             margin-top: 5px;
@@ -139,7 +139,7 @@
             const canvas = document.getElementById("canvas");
             const ctx = canvas.getContext("2d");
             let image = new Image();
-            image.crossOrigin = "anonymous"; // 允许跨域加载图片
+            image.crossOrigin = "anonymous";
             let points = [];
             let isClosed = false;
             let imageScale = 1;
@@ -179,14 +179,12 @@
             let imageUrl = urlParams.get("imageUrl");
             let productUrl = urlParams.get("productUrl");
 
-            // 未选择图片时显示空白
             if (!imageUrl) {
                 console.error("❌ imageUrl is missing in URL");
                 buttonsDiv.style.display = "block";
-                return; // 跳过加载图片
+                return;
             }
 
-            // 移除 ?orient
             if (imageUrl.includes("?")) {
                 imageUrl = imageUrl.split("?")[0];
             }
@@ -194,7 +192,7 @@
                 productUrl = productUrl.split("?")[0];
             }
 
-            let originalImageUrl = imageUrl; // 用于高清保存
+            let originalImageUrl = imageUrl;
 
             console.log("Raw Image URL:", urlParams.get("imageUrl"));
             console.log("Raw Product URL:", urlParams.get("productUrl"));
@@ -508,19 +506,19 @@
                 if (regions.length > 0) {
                     const data = {
                         imageUrl: originalImageUrl,
-                        regions: JSON.stringify(regions),
+                        regions: regions,  // 直接使用数组
                         productUrl: productUrl
                     };
                     console.log("Final imageUrl before fetch:", imageUrl);
                     console.log("Final productUrl before fetch:", productUrl);
                     console.log("Request Body:", JSON.stringify(data));
                     fetch('https://927a-65-38-72-98.ngrok-free.app/generate-image', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data)
-})
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    })
                     .then(response => response.json())
                     .then(result => {
                         console.log("Generate response:", JSON.stringify(result, null, 2));
