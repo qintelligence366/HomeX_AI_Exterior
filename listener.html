@@ -13,9 +13,9 @@
             if (event.data.type === "newImageUrl") {
                 console.log("WebView 2: New Image URL from Cloudinary:", event.data.url);
                 alert(`WebView 2 Received URL: ${event.data.url}`); // 确认 URL 接收
-                const apiToken = "6up4jw518te4m7gefzc2np7i3"; // 可能需更新
+                const apiToken = "0e9tbg0aczfjtibkyieb38tyr"; // 可能需更新
                 const appId = "60ce6d52-f7c2-4fd8-9848-cadeeaee4bf3";
-                const collectionId = "0e9tbg0aczfjtibkyieb38tyr";
+                const collectionId = "t_6cqriumtqk3gi6s8hzqj04ggf";
 
                 console.log("WebView 2: Sending request to Adalo...");
                 fetch(`https://api.adalo.com/v0/apps/${appId}/collections/${collectionId}/records`, {
