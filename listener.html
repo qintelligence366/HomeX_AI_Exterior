@@ -25,22 +25,22 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
+                        "userId": "user123", // 临时用户 ID，需替换为实际值
+                        "Name": "Generated Image", // 临时名称，需替换为实际值
                         "imageUrl": event.data.url
                     })
                 })
                 .then(response => {
-                    console.log("WebView 2: API response status:", response.status);
+                    console.log("WebView 2: API response status:", response.status); // 确认请求状态
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
-                .then(data => {
-                    console.log("WebView 2: Saved to database:", data);
-                })
+                .then(data => console.log("WebView 2: Saved to database:", data))
                 .catch(error => console.error("WebView 2: Error saving to database:", error));
             }
-        }); // 移除 false 参数，依赖默认同步处理
+        }, false); // 避免异步返回 true
     </script>
 </body>
 </html>
