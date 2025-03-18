@@ -175,15 +175,32 @@
             console.log("Search Params:", searchParams);
             const urlParams = new URLSearchParams(searchParams);
             console.log("URL Params Entries:", Array.from(urlParams.entries()));
-            let imageUrl = urlParams.get("imageUrl") || "https://placehold.co/600x400";
-            let productUrl = urlParams.get("productUrl") || "https://placehold.co/600x400";
-            // 移除 ?orient
-            if (productUrl) {
-                productUrl = productUrl.replace("?orient", "");
+            let imageUrl = urlParams.get("imageUrl");
+            let productUrl = urlParams.get("productUrl");
+
+            // 确保 imageUrl 不为空
+            if (!imageUrl) {
+                console.error("❌ imageUrl is missing in URL");
+                imageUrl = "https://placehold.co/600x400";
             }
+            // 确保 productUrl 不为空
+            if (!productUrl) {
+                console.error("❌ productUrl is missing in URL");
+                productUrl = "https://placehold.co/600x400";
+            }
+
+            // 移除 ?orient
+            if (imageUrl.includes("?")) {
+                imageUrl = imageUrl.split("?")[0];
+            }
+            if (productUrl.includes("?")) {
+                productUrl = productUrl.split("?")[0];
+            }
+
             console.log("Raw Image URL:", urlParams.get("imageUrl"));
             console.log("Raw Product URL:", urlParams.get("productUrl"));
-            console.log("Final Product Image URL:", productUrl);
+            console.log("✅ Final Image URL:", imageUrl);
+            console.log("✅ Final Product URL:", productUrl);
 
             if (imageUrl && !imageUrl.includes("placehold.co")) {
                 if (!imageUrl.includes("auto=format")) {
@@ -428,7 +445,7 @@
             saveButton.addEventListener("click", () => {
                 const highResImage = new Image();
                 highResImage.crossOrigin = "anonymous";
-                highResImage.src = originalImageUrl;
+                highResImage.src = imageUrl; // 使用 imageUrl 替代 originalImageUrl
 
                 highResImage.onload = () => {
                     const highResCanvas = document.createElement("canvas");
@@ -483,18 +500,19 @@
                 };
 
                 highResImage.onerror = () => {
-                    console.error("❌ Failed to load high-resolution image:", originalImageUrl);
+                    console.error("❌ Failed to load high-resolution image:", imageUrl);
                 };
             });
 
             generateButton.addEventListener("click", () => {
                 if (regions.length > 0) {
                     const data = {
-                        imageUrl: originalImageUrl,
+                        imageUrl: imageUrl, // 使用 imageUrl
                         regions: JSON.stringify(regions),
                         productUrl: productUrl
                     };
-                    console.log("Final productUrl before fetch:", productUrl); // 确认传输前的值
+                    console.log("Final imageUrl before fetch:", imageUrl);
+                    console.log("Final productUrl before fetch:", productUrl);
                     console.log("Request Body:", JSON.stringify(data));
                     fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
                         method: 'POST',
