@@ -33,6 +33,7 @@
             left: 0;
             width: 100%;
             height: 100%;
+            background-color: transparent; /* 确保空白背景 */
         }
         #buttons {
             margin-top: 5px;
@@ -178,29 +179,28 @@
             let imageUrl = urlParams.get("imageUrl");
             let productUrl = urlParams.get("productUrl");
 
-            // 确保 imageUrl 不为空
+            // 未选择图片时显示空白
             if (!imageUrl) {
                 console.error("❌ imageUrl is missing in URL");
-                imageUrl = "https://placehold.co/600x400";
-            }
-            // 确保 productUrl 不为空
-            if (!productUrl) {
-                console.error("❌ productUrl is missing in URL");
-                productUrl = "https://placehold.co/600x400";
+                buttonsDiv.style.display = "block";
+                return; // 跳过加载图片
             }
 
             // 移除 ?orient
             if (imageUrl.includes("?")) {
                 imageUrl = imageUrl.split("?")[0];
             }
-            if (productUrl.includes("?")) {
+            if (productUrl && productUrl.includes("?")) {
                 productUrl = productUrl.split("?")[0];
             }
+
+            let originalImageUrl = imageUrl; // 用于高清保存
 
             console.log("Raw Image URL:", urlParams.get("imageUrl"));
             console.log("Raw Product URL:", urlParams.get("productUrl"));
             console.log("✅ Final Image URL:", imageUrl);
             console.log("✅ Final Product URL:", productUrl);
+            console.log("✅ Original Image URL:", originalImageUrl);
 
             if (imageUrl && !imageUrl.includes("placehold.co")) {
                 if (!imageUrl.includes("auto=format")) {
@@ -445,7 +445,7 @@
             saveButton.addEventListener("click", () => {
                 const highResImage = new Image();
                 highResImage.crossOrigin = "anonymous";
-                highResImage.src = imageUrl; // 使用 imageUrl 替代 originalImageUrl
+                highResImage.src = originalImageUrl;
 
                 highResImage.onload = () => {
                     const highResCanvas = document.createElement("canvas");
@@ -500,14 +500,14 @@
                 };
 
                 highResImage.onerror = () => {
-                    console.error("❌ Failed to load high-resolution image:", imageUrl);
+                    console.error("❌ Failed to load high-resolution image:", originalImageUrl);
                 };
             });
 
             generateButton.addEventListener("click", () => {
                 if (regions.length > 0) {
                     const data = {
-                        imageUrl: imageUrl,
+                        imageUrl: originalImageUrl,
                         regions: JSON.stringify(regions),
                         productUrl: productUrl
                     };
