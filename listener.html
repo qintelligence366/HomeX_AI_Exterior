@@ -8,8 +8,23 @@
         window.addEventListener("message", function(event) {
             if (event.data.type === "newImageUrl") {
                 console.log("New Image URL from Cloudinary:", event.data.url);
-                // 将新 URL 绑定到 Adalo 全局变量
-                window.Adalo.setGlobalVariable("newImageUrl", event.data.url);
+                // 调用 Adalo API 保存到数据库
+                const apiToken = "your-adalo-api-token"; // 替换为实际 API 令牌
+                const appId = "your-app-id"; // 替换为实际 App ID
+                const collectionId = "your-collection-id"; // 替换为 GeneratedImages 的 ID
+                fetch(`https://api.adalo.com/apps/${appId}/collections/${collectionId}/records`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${apiToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "imageUrl": event.data.url
+                    })
+                })
+                .then(response => response.json())
+                .then(data => console.log("Saved to database:", data))
+                .catch(error => console.error("Error saving to database:", error));
             }
         });
     </script>
