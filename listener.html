@@ -6,13 +6,18 @@
 <body>
     <script>
         window.addEventListener("message", function(event) {
+            if (!event.data || typeof event.data !== "object") {
+                console.warn("WebView 2: Invalid message received:", event.data);
+                return;
+            }
             if (event.data.type === "newImageUrl") {
-                console.log("New Image URL from Cloudinary:", event.data.url);
-                alert(`Received URL: ${event.data.url}`); // 确认 URL 是否接收
-                const apiToken = "6up4jw518te4m7gefzc2np7i3";
+                console.log("WebView 2: Received newImageUrl message:", event.data.url);
+                alert(`WebView 2 Received URL: ${event.data.url}`); // 确认 URL 接收
+                const apiToken = "6up4jw518te4m7gefzc2np7i3"; // 可能需更新
                 const appId = "60ce6d52-f7c2-4fd8-9848-cadeeaee4bf3";
                 const collectionId = "t_6cqriumtqk3gi6s8hzqj04ggf";
 
+                console.log("WebView 2: Sending request to Adalo...");
                 fetch(`https://api.adalo.com/v0/apps/${appId}/collections/${collectionId}/records`, {
                     method: 'POST',
                     headers: {
@@ -24,16 +29,22 @@
                     })
                 })
                 .then(response => {
-                    console.log("API response status:", response.status); // 确认请求状态
+                    console.log("WebView 2: API response status:", response.status);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
                 })
-                .then(data => console.log("Saved to database:", data))
-                .catch(error => console.error("Error saving to database:", error));
+                .then(data => {
+                    console.log("WebView 2: Saved to database:", data);
+                    event.source.postMessage({ type: "success", message: "Image URL saved successfully" }, "*");
+                })
+                .catch(error => {
+                    console.error("WebView 2: Error saving to database:", error);
+                    event.source.postMessage({ type: "error", message: "Failed to save image URL" }, "*");
+                });
             }
-        });
+        }, false); // 显式设置 false，避免异步返回 true
     </script>
 </body>
 </html>
