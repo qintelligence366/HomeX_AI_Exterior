@@ -509,6 +509,8 @@
                         regions: regions,  // 直接使用数组
                         productUrl: productUrl
                     };
+                    // 添加调试日志
+                    console.log("Regions type:", typeof regions, "Regions value:", JSON.stringify(regions));
                     console.log("Final imageUrl before fetch:", imageUrl);
                     console.log("Final productUrl before fetch:", productUrl);
                     console.log("Request Body:", JSON.stringify(data));
@@ -519,7 +521,12 @@
                         },
                         body: JSON.stringify(data)
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+                        return response.json();
+                    })
                     .then(result => {
                         console.log("Generate response:", JSON.stringify(result, null, 2));
                         if (result.imageUrl) {
