@@ -8,7 +8,8 @@
         window.addEventListener("message", function(event) {
             if (event.data.type === "newImageUrl") {
                 console.log("New Image URL from Cloudinary:", event.data.url);
-                const apiToken = "6up4jw518te4m7gefzc2np7i3"; // 需验证是否有效
+                alert(`Received URL: ${event.data.url}`); // 确认 URL 是否接收
+                const apiToken = "6up4jw518te4m7gefzc2np7i3";
                 const appId = "60ce6d52-f7c2-4fd8-9848-cadeeaee4bf3";
                 const collectionId = "t_6cqriumtqk3gi6s8hzqj04ggf";
 
@@ -19,10 +20,11 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        "imageUrl": event.data.url
+                        "imageUrl": event.data.url // 初始字段名
                     })
                 })
                 .then(response => {
+                    console.log("API response status:", response.status); // 确认请求状态
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
