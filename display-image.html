@@ -177,13 +177,13 @@
             console.log("URL Params Entries:", Array.from(urlParams.entries()));
             let imageUrl = urlParams.get("imageUrl") || "https://placehold.co/600x400";
             let productUrl = urlParams.get("productUrl") || "https://placehold.co/600x400";
+            // 移除 ?orient
+            if (productUrl) {
+                productUrl = productUrl.replace("?orient", "");
+            }
             console.log("Raw Image URL:", urlParams.get("imageUrl"));
             console.log("Raw Product URL:", urlParams.get("productUrl"));
-            if (productUrl && productUrl.includes("?")) {
-                productUrl = productUrl.split("?")[0];
-            }
-            console.log("User Image URL:", imageUrl);
-            console.log("Product Image URL:", productUrl);
+            console.log("Final Product Image URL:", productUrl);
 
             if (imageUrl && !imageUrl.includes("placehold.co")) {
                 if (!imageUrl.includes("auto=format")) {
@@ -494,6 +494,7 @@
                         regions: JSON.stringify(regions),
                         productUrl: productUrl
                     };
+                    console.log("Final productUrl before fetch:", productUrl); // 确认传输前的值
                     console.log("Request Body:", JSON.stringify(data));
                     fetch('https://f5ab-65-38-72-98.ngrok-free.app/generate-image', {
                         method: 'POST',
