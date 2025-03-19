@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import requests
 from PIL import Image
@@ -10,7 +11,6 @@ import time
 import traceback
 import numpy as np
 import cv2
-import os
 
 # 配置 Cloudinary
 cloudinary.config(
@@ -34,11 +34,14 @@ app = FastAPI()
 # 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://qintelligence366.github.io"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 挂载静态文件到 /static
+app.mount("/static", StaticFiles(directory=".", html=True), name="static")
 
 # 判断是否为侧面图
 def is_side_view(points, threshold=0.18):
@@ -48,6 +51,7 @@ def is_side_view(points, threshold=0.18):
     top_points = sorted(points_array, key=lambda p: p[1])[:2]
     bottom_points = sorted(points_array, key=lambda p: p[1], reverse=True)[:2]
     top_points = sorted(top_points, key=lambda p: p[0])
+    # 修正：使用 bottom_points 而不是 custom_points
     bottom_points = sorted(bottom_points, key=lambda p: p[0])
     left_points = sorted(points_array, key=lambda p: p[0])[:2]
     right_points = sorted(points_array, key=lambda p: p[0], reverse=True)[:2]
@@ -68,10 +72,9 @@ def is_side_view(points, threshold=0.18):
     print(f"width_diff: {width_diff}, height_diff: {height_diff}, angle_diff (degrees): {np.degrees(angle_diff)}")
     return width_diff > threshold and height_diff > threshold and angle_diff > np.radians(10)
 
-# 透视变换（应用于侧面视角）
+# 透视变换
 def apply_perspective_transform(product_resized, pixel_coords, x, y, w, h, customer_image):
     try:
-        # 使用前 4 个点，保持原始顺序
         dst_points = pixel_coords[:4].astype(np.float32)
         src_points = np.array([
             [0, 0],
@@ -80,11 +83,9 @@ def apply_perspective_transform(product_resized, pixel_coords, x, y, w, h, custo
             [0, product_resized.shape[0] - 1]
         ], dtype=np.float32)
 
-        # 计算透视变换矩阵
         matrix = cv2.getPerspectiveTransform(src_points, dst_points)
         product_warped = cv2.warpPerspective(product_resized, matrix, (customer_image.shape[1], customer_image.shape[0]))
-
-        return product_warped[y:y+h, x:x+w]  # 裁剪到边界框
+        return product_warped[y:y+h, x:x+w]
     except cv2.error as e:
         print("透视变换错误:", e)
         return product_resized
@@ -94,13 +95,11 @@ def apply_perspective_transform(product_resized, pixel_coords, x, y, w, h, custo
 async def generate_image(request: ImageRequest):
     try:
         print("Received request:", request.dict())
-        # 下载原始图片
         img_response = requests.get(request.imageUrl.split("?")[0], timeout=10)
         if img_response.status_code != 200:
             raise Exception(f"Failed to download image: Status {img_response.status_code}")
         customer_image = cv2.cvtColor(np.array(Image.open(BytesIO(img_response.content)).convert("RGBA")), cv2.COLOR_RGBA2BGRA)
 
-        # 下载产品图片
         if not request.productUrl or not request.productUrl.strip():
             raise Exception("productUrl is empty or invalid")
         prod_response = requests.get(request.productUrl.split("?")[0], timeout=10)
@@ -108,7 +107,6 @@ async def generate_image(request: ImageRequest):
             raise Exception(f"Failed to download product: Status {prod_response.status_code}")
         product_img = cv2.cvtColor(np.array(Image.open(BytesIO(prod_response.content)).convert("RGBA")), cv2.COLOR_RGBA2BGRA)
 
-        # 解析 regions
         regions_data = request.regions
         if not isinstance(regions_data, list) or len(regions_data) < 1 or not isinstance(regions_data[0], list):
             raise Exception("Invalid regions format, need at least one list of points")
@@ -119,20 +117,16 @@ async def generate_image(request: ImageRequest):
         pixel_coords = np.array([[int(coord["x"] * original_width), int(coord["y"] * original_height)] for coord in region_points], dtype=np.int32)
         print("Pixel coordinates:", pixel_coords)
 
-        # 创建掩码
         mask = np.zeros((original_height, original_width), dtype=np.uint8)
         cv2.fillPoly(mask, [pixel_coords], 255)
         print("Mask created")
 
-        # 计算边界框
         x, y, w, h = cv2.boundingRect(pixel_coords)
         print("Boundary box (x, y, w, h):", (x, y, w, h))
 
-        # 调整产品图片大小
         product_resized = cv2.resize(product_img, (w, h), interpolation=cv2.INTER_AREA)
         print("Resized product image size:", product_resized.shape)
 
-        # 应用透视变换（仅对侧面视图）
         product_warped = product_resized
         if is_side_view(pixel_coords) and len(pixel_coords) >= 4:
             print("执行透视变换...")
@@ -140,14 +134,12 @@ async def generate_image(request: ImageRequest):
         else:
             print("不执行透视变换，使用默认替换")
 
-        # 羽化边缘
         kernel_size = 15
         blurred_mask = cv2.GaussianBlur(mask, (kernel_size, kernel_size), 0)
         print("Edge feathering completed")
         mask_region = blurred_mask[y:y+h, x:x+w]
         print("Mask region shape:", mask_region.shape)
 
-        # 精确替换
         if product_warped.shape[2] == 4:
             print("Product image has alpha channel")
             alpha = cv2.resize(product_warped[:, :, 3] / 255.0, (w, h), interpolation=cv2.INTER_LINEAR)
@@ -167,7 +159,6 @@ async def generate_image(request: ImageRequest):
                     customer_image[y:y+h, x:x+w, c]
                 )
 
-        # 转换为 PIL 图像并上传
         img_result = Image.fromarray(cv2.cvtColor(customer_image, cv2.COLOR_BGRA2RGB))
         img_byte_arr = BytesIO()
         img_result.save(img_byte_arr, format="JPEG")
@@ -182,10 +173,4 @@ async def generate_image(request: ImageRequest):
     except Exception as e:
         print("Error processing image:", traceback.format_exc())
         return {"error": str(e)}, 500
-
-# 运行服务器
-if __name__ == "__main__":
-    import os
-    import uvicorn
-    port = int(os.getenv("PORT", 8000))  # 默认 8000，Deta 会覆盖
-    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
+        
