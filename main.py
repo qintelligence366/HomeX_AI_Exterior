@@ -51,7 +51,6 @@ def is_side_view(points, threshold=0.18):
     top_points = sorted(points_array, key=lambda p: p[1])[:2]
     bottom_points = sorted(points_array, key=lambda p: p[1], reverse=True)[:2]
     top_points = sorted(top_points, key=lambda p: p[0])
-    # 修正：使用 bottom_points 而不是 custom_points
     bottom_points = sorted(bottom_points, key=lambda p: p[0])
     left_points = sorted(points_array, key=lambda p: p[0])[:2]
     right_points = sorted(points_array, key=lambda p: p[0], reverse=True)[:2]
