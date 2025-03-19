@@ -66,7 +66,7 @@ def is_side_view(points, threshold=0.18):
     width_diff = abs(top_width - bottom_width) / max(top_width, bottom_width)
     height_diff = abs(left_height - right_height) / max(left_height, right_height)
     angle_top = np.arctan2(top_points[1][1] - top_points[0][1], top_points[1][0] - top_points[0][0])
-    angle_bottom = np.arctan2(bottom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])
+    angle_bottom = np.arctan2(custom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])
     angle_diff = abs(angle_top - angle_bottom)
 
     print(f"width_diff: {width_diff}, height_diff: {height_diff}, angle_diff (degrees): {np.degrees(angle_diff)}")
@@ -164,7 +164,7 @@ async def generate_image(request: ImageRequest):
         img_result.save(img_byte_arr, format="JPEG")
         upload_result = cloudinary.uploader.upload(
             img_byte_arr.getvalue(),
-            public_id=f"replaced_{int(time.time())}",
+            public_id=f"garage_doors/replaced_{int(time.time())}",
             format="jpg"
         )
         new_image_url = upload_result["url"]
@@ -173,4 +173,3 @@ async def generate_image(request: ImageRequest):
     except Exception as e:
         print("Error processing image:", traceback.format_exc())
         return {"error": str(e)}, 500
-        
