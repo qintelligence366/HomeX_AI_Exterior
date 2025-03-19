@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+requests
+pillow
+cloudinary
+numpy
+opencv-python-headless  # 云端推荐无 GUI 版本
+python-multipart
