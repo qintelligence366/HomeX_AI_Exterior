@@ -51,7 +51,7 @@ def is_side_view(points, threshold=0.18):
     top_points = sorted(points_array, key=lambda p: p[1])[:2]
     bottom_points = sorted(points_array, key=lambda p: p[1], reverse=True)[:2]
     top_points = sorted(top_points, key=lambda p: p[0])
-    bottom_points = sorted(bottom_points, key=lambda p: p[0])
+    bottom_points = sorted(bottom_points, key=lambda p: p[0])  # 改为 bottom_points
     left_points = sorted(points_array, key=lambda p: p[0])[:2]
     right_points = sorted(points_array, key=lambda p: p[0], reverse=True)[:2]
     left_points = sorted(left_points, key=lambda p: p[1])
@@ -65,7 +65,7 @@ def is_side_view(points, threshold=0.18):
     width_diff = abs(top_width - bottom_width) / max(top_width, bottom_width)
     height_diff = abs(left_height - right_height) / max(left_height, right_height)
     angle_top = np.arctan2(top_points[1][1] - top_points[0][1], top_points[1][0] - top_points[0][0])
-    angle_bottom = np.arctan2(bottom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])
+    angle_bottom = np.arctan2(custom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])  # 改为 bottom_points
     angle_diff = abs(angle_top - angle_bottom)
 
     print(f"width_diff: {width_diff}, height_diff: {height_diff}, angle_diff (degrees): {np.degrees(angle_diff)}")
@@ -163,7 +163,8 @@ async def generate_image(request: ImageRequest):
         img_result.save(img_byte_arr, format="JPEG")
         upload_result = cloudinary.uploader.upload(
             img_byte_arr.getvalue(),
-            public_id=f"garage_doors/replaced_{int(time.time())}",
+            folder="garage_doors",
+            public_id=f"replaced_{int(time.time())}",
             format="jpg"
         )
         new_image_url = upload_result["url"]
