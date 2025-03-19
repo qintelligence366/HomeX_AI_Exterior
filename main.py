@@ -14,9 +14,9 @@ import os
 
 # 配置 Cloudinary
 cloudinary.config(
-    cloud_name="dwv3c4qi7",
-    api_key="891787473827712",
-    api_secret="PJR7HjVjc0Qo1bYebNhgZ_E7Y4w"
+    cloud_name="djepeyshu",
+    api_key="188513436699751",
+    api_secret="h9U86BmSDxSpQuYKL_S5tXg6odQ"
 )
 
 # 定义请求体模型
