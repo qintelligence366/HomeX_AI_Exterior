@@ -65,7 +65,7 @@ def is_side_view(points, threshold=0.18):
     width_diff = abs(top_width - bottom_width) / max(top_width, bottom_width)
     height_diff = abs(left_height - right_height) / max(left_height, right_height)
     angle_top = np.arctan2(top_points[1][1] - top_points[0][1], top_points[1][0] - top_points[0][0])
-    angle_bottom = np.arctan2(custom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])  # 改为 bottom_points
+    angle_bottom = np.arctan2(bottom_points[1][1] - bottom_points[0][1], bottom_points[1][0] - bottom_points[0][0])  # 改为 bottom_points
     angle_diff = abs(angle_top - angle_bottom)
 
     print(f"width_diff: {width_diff}, height_diff: {height_diff}, angle_diff (degrees): {np.degrees(angle_diff)}")
