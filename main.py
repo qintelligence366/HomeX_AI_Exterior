@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import requests
 from PIL import Image
@@ -11,6 +10,7 @@ import time
 import traceback
 import numpy as np
 import cv2
+import os
 
 # 配置 Cloudinary
 cloudinary.config(
@@ -31,17 +31,14 @@ class ImageRequest(BaseModel):
 # 创建 FastAPI 应用
 app = FastAPI()
 
-# 添加 CORS 中间件，支持 Adalo
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 临时允许所有来源，测试后可改为 Adalo 域名
+    allow_origins=["https://qintelligence366.github.io"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# 挂载静态文件目录
-app.mount("/", StaticFiles(directory=".", html=True), name="static")
 
 # 判断是否为侧面图
 def is_side_view(points, threshold=0.18):
@@ -51,7 +48,6 @@ def is_side_view(points, threshold=0.18):
     top_points = sorted(points_array, key=lambda p: p[1])[:2]
     bottom_points = sorted(points_array, key=lambda p: p[1], reverse=True)[:2]
     top_points = sorted(top_points, key=lambda p: p[0])
-    # 修正：使用 bottom_points 而不是未定义的 custom_points
     bottom_points = sorted(bottom_points, key=lambda p: p[0])
     left_points = sorted(points_array, key=lambda p: p[0])[:2]
     right_points = sorted(points_array, key=lambda p: p[0], reverse=True)[:2]
@@ -75,6 +71,7 @@ def is_side_view(points, threshold=0.18):
 # 透视变换（应用于侧面视角）
 def apply_perspective_transform(product_resized, pixel_coords, x, y, w, h, customer_image):
     try:
+        # 使用前 4 个点，保持原始顺序
         dst_points = pixel_coords[:4].astype(np.float32)
         src_points = np.array([
             [0, 0],
@@ -83,9 +80,11 @@ def apply_perspective_transform(product_resized, pixel_coords, x, y, w, h, custo
             [0, product_resized.shape[0] - 1]
         ], dtype=np.float32)
 
+        # 计算透视变换矩阵
         matrix = cv2.getPerspectiveTransform(src_points, dst_points)
         product_warped = cv2.warpPerspective(product_resized, matrix, (customer_image.shape[1], customer_image.shape[0]))
-        return product_warped[y:y+h, x:x+w]
+
+        return product_warped[y:y+h, x:x+w]  # 裁剪到边界框
     except cv2.error as e:
         print("透视变换错误:", e)
         return product_resized
@@ -183,3 +182,10 @@ async def generate_image(request: ImageRequest):
     except Exception as e:
         print("Error processing image:", traceback.format_exc())
         return {"error": str(e)}, 500
+
+# 运行服务器
+if __name__ == "__main__":
+    import os
+    import uvicorn
+    port = int(os.getenv("PORT", 8000))  # 默认 8000，Deta 会覆盖
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
