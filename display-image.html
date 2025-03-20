@@ -178,6 +178,7 @@
             console.log("URL Params Entries:", Array.from(urlParams.entries()));
             let imageUrl = urlParams.get("imageUrl");
             let productUrl = urlParams.get("productUrl");
+            let savedRegions = urlParams.get("regions");
 
             if (!imageUrl) {
                 console.error("❌ imageUrl is missing in URL");
@@ -199,6 +200,16 @@
             console.log("✅ Final Image URL:", imageUrl);
             console.log("✅ Final Product URL:", productUrl);
             console.log("✅ Original Image URL:", originalImageUrl);
+
+            // 恢复框选区域
+            if (savedRegions) {
+                try {
+                    regions = JSON.parse(decodeURIComponent(savedRegions));
+                    console.log("Restored regions:", regions);
+                } catch (e) {
+                    console.error("Failed to parse saved regions:", e);
+                }
+            }
 
             if (imageUrl && !imageUrl.includes("placehold.co")) {
                 if (!imageUrl.includes("auto=format")) {
@@ -506,10 +517,9 @@
                 if (regions.length > 0) {
                     const data = {
                         imageUrl: originalImageUrl,
-                        regions: regions,  // 直接使用数组
+                        regions: regions,
                         productUrl: productUrl
                     };
-                    // 添加调试日志
                     console.log("Regions type:", typeof regions, "Regions value:", JSON.stringify(regions));
                     console.log("Final imageUrl before fetch:", imageUrl);
                     console.log("Final productUrl before fetch:", productUrl);
